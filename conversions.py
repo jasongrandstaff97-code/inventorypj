@@ -1,23 +1,61 @@
-# prep_multiplier = tubs/lexans. storage_multiplier = cases/bags/sleeves (if applicable, else 1)
+# conversions.py
 
-conversions_dict = {
-    "WING - ROASTED 20 LB (Bag)": {"prep_multiplier": 0.25, "storage_multiplier": 1.0},
-    "WINGS - BONELESS (Bag)": {"prep_multiplier": 0.50, "storage_multiplier": 1.0},
-    "Italian Sausage (Bag)": {"prep_multiplier": 0.125, "storage_multiplier": 1.0},
-    "Sausage (Bag)": {"prep_multiplier": 0.125, "storage_multiplier": 1.0},
-    "Beef (Bag)": {"prep_multiplier": 0.25, "storage_multiplier": 1.0},
-    "Green Peppers - Sliced (Bag)": {"prep_multiplier": 0.125, "storage_multiplier": 1.0},
-    "Onions - Sliced (Bag)": {"prep_multiplier": 0.125, "storage_multiplier": 1.0},
-    "Pepperoni (Bag)": {"prep_multiplier": 0.125, "storage_multiplier": 1.0},
-    "Mushrooms-fresh (Pail)": {"prep_multiplier": 0.25, "storage_multiplier": 1.0},
-    "STRING CHEESE 20 LB (Bag)": {"prep_multiplier": 0.25, "storage_multiplier": 1.0},
-    "Bacon (Bag)": {"prep_multiplier": 0.25, "storage_multiplier": 1.0},
-    "Alfredo Sauce (Pouch)": {"prep_multiplier": 0.50, "storage_multiplier": 1.0},
-    "Bulk Ranch Sauce (Pouch)": {"prep_multiplier": 0.20, "storage_multiplier": 1.0},
-    "Anchovies (Can)": {"prep_multiplier": 0.04, "storage_multiplier": 0.04}, 
-    "Frozen Thin Crust 14\" (Case)": {"prep_multiplier": 0.0167, "storage_multiplier": 0.25}, 
-    "Black Olives (Pouch)": {"prep_multiplier": 0.1667, "storage_multiplier": 1.0},
-    "PINEAPPLE - POUCH (Pouch)": {"prep_multiplier": 0.0833, "storage_multiplier": 1.0},
-    "Crust - Parbaked Pan Pizza (Bag)": {"prep_multiplier": 0.0625, "storage_multiplier": 0.25}, 
-    "DOUGH M - 12 INCH (11 PER)": {"prep_multiplier": 11.0, "storage_multiplier": 11.0} 
+# =====================================================================
+# THE BAG MULTIPLIER
+# How much of a full case is ONE bag, pouch, or tray?
+# =====================================================================
+bag_conversions = {
+    # --- Original Makeline Meats ---
+    "Pepperoni": 0.5,    
+    "Sausage": 0.33,
+    "Beef": 0.25,
+    
+    # --- New Prepped / Back-of-House Items ---
+    "Garlic Knots": 0.00,          # REPLACE: How much of a case is 1 Tray of Knots?
+    "Prepped Ranch (Lexan)": 0.00, # REPLACE: How much of a case is 1 bulk pouch?
+    "Prepped Spinach": 0.00,       # REPLACE: How much of a case is 1 bag of spinach?
+    "Prepped Mushrooms": 0.00,     # REPLACE: How much of a case is 1 bag/pail?
+    "Prepped Black Olives": 0.00,  # REPLACE: How much of a case is 1 pouch?
+    "Prepped Pineapple": 0.00,     # REPLACE: How much of a case is 1 pouch?
+    "Prepped Pepperoni": 0.5       # Assuming the prepped backup is standard bag weight
 }
+
+# =====================================================================
+# THE LEXAN MULTIPLIER
+# How much of a full case is ONE Lexan?
+# =====================================================================
+lexan_conversions = {
+    # --- Original Makeline Meats ---
+    "Pepperoni": 0.25,
+    "Sausage": 0.165,
+    "Beef": 0.125,
+    
+    # --- New Prepped / Back-of-House Items ---
+    "Garlic Knots": 0.00,          # Leave 0.00 if Knots don't go in Lexans
+    "Prepped Ranch (Lexan)": 0.00, # REPLACE: How much of a case is 1 Lexan of Ranch?
+    "Prepped Spinach": 0.00,       # REPLACE: How much of a case is 1 Lexan of Spinach?
+    "Prepped Mushrooms": 0.00,     # REPLACE: How much of a case is 1 Lexan of Mushrooms?
+    "Prepped Black Olives": 0.00,  # REPLACE: How much of a case is 1 Lexan of Olives?
+    "Prepped Pineapple": 0.00,     # REPLACE: How much of a case is 1 Lexan of Pineapple?
+    "Prepped Pepperoni": 0.25      # Standard Makeline Lexan weight
+}
+
+# =====================================================================
+# THE CONVERSION ENGINE
+# =====================================================================
+def calculate_total(item_name, cases, bags, lexans):
+    """
+    Takes the physical count from the Streamlit UI and applies 
+    Jason's specific mathematical yield constants to get total cases.
+    """
+    
+    # Fetch the specific multiplier for the item.
+    # If the item isn't in the dictionary (like a box of gloves), it defaults to 0.0
+    bag_mult = bag_conversions.get(item_name, 0.0)
+    lexan_mult = lexan_conversions.get(item_name, 0.0)
+    
+    # The Master Equation: Cases + (Bags * Bag_Multiplier) + (Lexans * Lexan_Multiplier)
+    total = cases + (bags * bag_mult) + (lexans * lexan_mult)
+    
+    # Round to 2 decimal places to match the corporate software requirements
+    return round(total, 2)
