@@ -66,8 +66,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Inventory Count Engine
-")
+st.title("Inventory Count Engine")
 st.caption("🚀 Shelf-to-Sheet Architecture | Papa John's Edition")
 
 # --- 2. DATA LOADING ---
