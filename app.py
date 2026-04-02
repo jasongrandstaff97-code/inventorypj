@@ -44,7 +44,7 @@ if not st.session_state['logged_in']:
 
 # --- 3. THE MASTER DATA DICTIONARY ---
 master_inventory = [
-    # Walk-in Section 
+    # --- Walk-in Section ---
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
     [1075, "Dough Tray 10", "Tray", "Walk-in Section", 1.0, 0.0],
     [1076, "DOUGH M, 12 INCH", "Tray", "Walk-in Section", 1.0, 0.0],
@@ -85,7 +85,7 @@ master_inventory = [
     [1152, "Sauce, Pizza Ranch", "Bag", "Walk-in Section", 12.0, 0.5],
     [1040, "Pepperoni", "Bag", "Walk-in Section", 2.0, 0.25],
 
-    # Prep Rack Section 
+    # --- Prep Rack Section ---
     [1002, "Ranch", "Pouch", "Prep Rack", 8.0, 1.0],
     [1218, "Alfredo", "Pouch", "Prep Rack", 3.0, 1.0],
     [1148, "BBQ Sauce", "Bag", "Prep Rack", 8.0, 1.0],
@@ -118,8 +118,8 @@ master_inventory = [
     [1093, "Boneless Wings", "Bag", "Prep Rack", 2.0, 1.0],
     [1040, "Pepperoni", "Bag", "Prep Rack", 2.0, 0.25],
 
-    # Makeline & Front Sections 
-    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Makeline Section (Bottom)", 6.0, 3.0], # Added to Makeline for Pouches
+    # --- Makeline Section ---
+    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Makeline Section (Bottom)", 6.0, 3.0], 
     [1016, "Green Peppers, Sliced", "Bag", "Makeline Section (Top)", 4.0, 0.5],
     [1017, "Onions, Sliced", "Bag", "Makeline Section (Top)", 4.0, 0.5],
     [1019, "Tomatoes, Diced Roma", "Tray", "Makeline Section (Top)", 2.0, 0.5],
@@ -145,14 +145,40 @@ master_inventory = [
     [1251, "Sliced American Cheese", "Bag", "Makeline Section (Top)", 4.0, 0.33],
     [1257, "Three Cheese Blend", "Bag", "Makeline Section (Bottom)", 2.0, 0.5],
     [1331, "STRING CHEESE 20 LB", "Bag", "Makeline Section (Bottom)", 1.0, 0.25],
+
+    # --- NEW: Backup Boxes (Separate from Cut Table) ---
+    [2043, "Pizza Box 8", "Each", "Backup Boxes", 50.0, 0.0],
+    [2005, "Pizza Box 10", "Each", "Backup Boxes", 50.0, 0.0],
+    [2007, "Pizza Box 12", "Each", "Backup Boxes", 50.0, 0.0],
+    [2010, "Pizza Box 14", "Each", "Backup Boxes", 50.0, 0.0],
+    [2025, "Pizza Box 16 In", "Each", "Backup Boxes", 50.0, 0.0],
+    [2146, "Sandwich Box", "Each", "Backup Boxes", 50.0, 0.0],
+    [2047, "CHICKEN BOX", "Each", "Backup Boxes", 240.0, 0.0], # Wing Box Backups
+
+    # --- UPDATED: Cut Table Section ---
+    [2146, "Sandwich Box", "Each", "Cut Table Section", 50.0, 0.0],
+    [2047, "CHICKEN BOX", "Each", "Cut Table Section", 240.0, 0.0], # Wing Box
+    [2043, "Pizza Box 8", "Each", "Cut Table Section", 50.0, 0.0],
     [2005, "Pizza Box 10", "Each", "Cut Table Section", 50.0, 0.0],
     [2007, "Pizza Box 12", "Each", "Cut Table Section", 50.0, 0.0],
     [2010, "Pizza Box 14", "Each", "Cut Table Section", 50.0, 0.0],
     [2025, "Pizza Box 16 In", "Each", "Cut Table Section", 50.0, 0.0],
-    [2043, "Pizza Box 8", "Each", "Cut Table Section", 50.0, 0.0],
-    [2047, "CHICKEN BOX", "Each", "Cut Table Section", 240.0, 0.0],
-    [2146, "Sandwich Box", "Each", "Cut Table Section", 50.0, 0.0],
+    [2071, "Garlic Knot Tray", "Each", "Cut Table Section", 125.0, 0.0],
+    [2065, "Tray, Garlic Breadstick", "Each", "Cut Table Section", 150.0, 0.0],
+    [2305, "Medium Weight Plastic fork", "Case", "Cut Table Section", 1000.0, 0.0],
+    [1118, "BBQ Sauce Cups", "Case", "Cut Table Section", 1.0, 0.0],
+    [1117, "Buffalo Sauce Cups", "Case", "Cut Table Section", 1.0, 0.0],
+    [2039, "Pop Up Foil", "Case", "Cut Table Section", 6.0, 0.0],
     [2307, "Corrugated Pizza Sleeve", "Case", "Cut Table Section", 100.0, 0.0],
+    [1241, "Pepperoncini Peppers", "Bag", "Cut Table Section", 6.0, 1.0],
+    [1105, "Garlic Sauce Cups", "Case", "Cut Table Section", 1.0, 0.0],
+    [1222, "Season Pkt", "Case", "Cut Table Section", 1.0, 0.0],
+    [1135, "Buffalo Sauce (Pouch)", "Pouch", "Cut Table Section", 8.0, 1.0],
+    [1148, "BBQ Bulk", "Bag", "Cut Table Section", 8.0, 1.0],
+    [1140, "Pouch Honey Chptl", "Pouch", "Cut Table Section", 10.0, 1.0],
+    [1150, "Garlic Parm Truffle Sc", "Pouch", "Cut Table Section", 12.0, 0.5],
+
+    # --- Customer Service Counter ---
     [1102, "Spicy Garlic Dipping Cup", "Case", "Customer Service Counter", 1.0, 0.0],
     [1104, "Jug Garlic Sauce", "Bottle", "Customer Service Counter", 10.0, 0.0],
     [1105, "Garlic Sauce Cups", "Case", "Customer Service Counter", 1.0, 0.0],
@@ -164,29 +190,58 @@ master_inventory = [
     [1224, "CRP Packets", "Case", "Customer Service Counter", 1.0, 0.0],
     [1225, "Parmesan Packet", "Case", "Customer Service Counter", 1.0, 0.0],
     [3065, "Logo Napkins (Sleeve)", "Case", "Customer Service Counter", 32.0, 0.0],
-    [6200, "2Ltr Pepsi", "Each", "Soda back of store", 8.0, 0.0],
-    [6202, "2Ltr Pepsi ZeroSug", "Each", "Soda back of store", 8.0, 0.0],
-    [6203, "2Ltr Mountain Dew", "Each", "Soda back of store", 8.0, 0.0],
-    [6204, "2Ltr Diet Mtn Dew", "Each", "Soda back of store", 8.0, 0.0],
-    [6661, "2Ltr Starry", "Each", "Soda back of store", 8.0, 0.0],
-    [7015, "2Ltr Starry Zero", "Each", "Soda back of store", 8.0, 0.0],
+
+    # --- Soda Sections ---
     [6000, "20oz Pepsi", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6002, "20oz Pepsi ZeroSug", "Each", "Front of Store Soda", 24.0, 0.0],
     [6003, "20oz Mountain Dew", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6004, "20oz Diet Mtn Dew", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6006, "20oz Aquafina", "Each", "Front of Store Soda", 24.0, 0.0],
     [6660, "20oz Starry", "Each", "Front of Store Soda", 24.0, 0.0],
-    [7013, "20oz Starry Zero", "Each", "Front of Store Soda", 24.0, 0.0],
-    [2039, "Pop Up Foil", "Case", "Back of store/Dry goods", 6.0, 0.0],
-    [2065, "Tray, Garlic Breadstick", "Each", "Back of store/Dry goods", 150.0, 0.0],
-    [2071, "Garlic Knot Tray", "Each", "Back of store/Dry goods", 125.0, 0.0],
-    [2305, "Medium Weight Plastic fork", "Case", "Back of store/Dry goods", 1000.0, 0.0],
-    [3007, "Cup 22oz Cold", "Case", "Back of store/Dry goods", 20.0, 0.0],
-    [3012, "SOUFFLE CUP, HINGED LID", "Case", "Back of store/Dry goods", 40.0, 0.0],
-    [3040, "14in Baking Sheet", "Case", "Back of store/Dry goods", 1.0, 0.0],
-    [3041, "6.5in Baking Sheet", "Case", "Back of store/Dry goods", 1.0, 0.0],
-    [3042, "10in Baking Sheet", "Case", "Back of store/Dry goods", 1.0, 0.0],
-    [3044, "Dessert Bag", "Case", "Back of store/Dry goods", 1.0, 0.0],
+    [6006, "20oz Aquafina", "Each", "Front of Store Soda", 24.0, 0.0],
+    [6002, "20oz Pepsi ZeroSug", "Each", "Front of Store Soda", 24.0, 0.0],
+    [6200, "2Ltr Pepsi", "Each", "Front of Store Soda", 8.0, 0.0],
+    [6203, "2Ltr Mountain Dew", "Each", "Front of Store Soda", 8.0, 0.0],
+    [6661, "2Ltr Starry", "Each", "Front of Store Soda", 8.0, 0.0],
+    [6202, "2Ltr Pepsi ZeroSug", "Each", "Front of Store Soda", 8.0, 0.0],
+
+    [6202, "2Ltr Pepsi ZeroSug", "Each", "Soda back of store", 8.0, 0.0],
+    [6200, "2Ltr Pepsi", "Each", "Soda back of store", 8.0, 0.0],
+    [6661, "2Ltr Starry", "Each", "Soda back of store", 8.0, 0.0],
+    [6203, "2Ltr Mountain Dew", "Each", "Soda back of store", 8.0, 0.0],
+    [6000, "20oz Pepsi", "Each", "Soda back of store", 24.0, 0.0],
+    [6003, "20oz Mountain Dew", "Each", "Soda back of store", 24.0, 0.0],
+    [6660, "20oz Starry", "Each", "Soda back of store", 24.0, 0.0],
+    [6002, "20oz Pepsi ZeroSug", "Each", "Soda back of store", 24.0, 0.0],
+
+    # --- NEW: Dry Goods (Rack 1) ---
+    [3007, "Cup 22oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
+    [1135, "Buffalo Sauce (Pouch)", "Pouch", "Dry Goods (Rack 1)", 8.0, 1.0],
+    [1140, "Pouch Honey Chptl", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
+    [1150, "Garlic Parm Truffle Sc", "Pouch", "Dry Goods (Rack 1)", 12.0, 0.5],
+    [1148, "BBQ Bulk", "Bag", "Dry Goods (Rack 1)", 8.0, 1.0],
+    [1241, "Pepperoncini Peppers", "Bag", "Dry Goods (Rack 1)", 6.0, 1.0],
+    [1031, "Black Olives", "Pouch", "Dry Goods (Rack 1)", 6.0, 1.0],
+    [1209, "Banana Peppers", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
+    [1210, "Jalapeno Peppers", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
+    [1191, "IT Seasoning", "Bag", "Dry Goods (Rack 1)", 1.0, 0.0],
+    [1047, "PINEAPPLE - POUCH", "Pouch", "Dry Goods (Rack 1)", 6.0, 0.5],
+
+    # --- NEW: Dry Goods (Rack 2 - Pizza Sauce) ---
+    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Dry Goods (Rack 2 - Pizza Sauce)", 6.0, 3.0], 
+
+    # --- NEW: Dry Goods (Rack 3) ---
+    [1118, "BBQ Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [1117, "Buffalo Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2065, "Tray, Garlic Breadstick", "Each", "Dry Goods (Rack 3)", 150.0, 0.0],
+    [2071, "Garlic Knot Tray", "Each", "Dry Goods (Rack 3)", 125.0, 0.0],
+    [2307, "Corrugated Pizza Sleeve", "Case", "Dry Goods (Rack 3)", 100.0, 0.0],
+    [3044, "Dessert Bag", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3042, "10in Baking Sheet", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3040, "14in Baking Sheet", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2039, "Pop Up Foil", "Case", "Dry Goods (Rack 3)", 6.0, 0.0],
+    [3012, "SOUFFLE CUP, HINGED LID", "Case", "Dry Goods (Rack 3)", 40.0, 0.0],
+    [2305, "Medium Weight Plastic fork", "Case", "Dry Goods (Rack 3)", 1000.0, 0.0],
+    [2047, "CHICKEN BOX", "Each", "Dry Goods (Rack 3)", 240.0, 0.0],
+    [3065, "Logo Napkins (Sleeve)", "Case", "Dry Goods (Rack 3)", 32.0, 0.0],
+
     [2031, "Blaster Labels", "Roll", "Storage by office desk", 16.0, 0.0]
 ]
 
@@ -194,7 +249,6 @@ master_inventory = [
 df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
 
 # --- 4. THE UI RENDER ENGINE ---
-# Helper function for blank inputs
 def clean_input(label, key, step=1.0):
     val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
     return val if val is not None else 0.0
@@ -204,10 +258,12 @@ st.caption("🚀 Secured Architecture | Papa John's Store 04185")
 
 inventory_totals = []
 
+# Updated walk-path order perfectly matching new racks and box sections
 sections = [
     "Walk-in Section", "Prep Rack", "Makeline Section (Top)", "Makeline Section (Bottom)",
-    "Cut Table Section", "Customer Service Counter", "Soda back of store", 
-    "Front of Store Soda", "Back of store/Dry goods", "Storage by office desk"
+    "Backup Boxes", "Cut Table Section", "Customer Service Counter", "Soda back of store", 
+    "Front of Store Soda", "Dry Goods (Rack 1)", "Dry Goods (Rack 2 - Pizza Sauce)", 
+    "Dry Goods (Rack 3)", "Storage by office desk"
 ]
 
 for section in sections:
@@ -226,105 +282,55 @@ for section in sections:
                     # Special Logic for Thin Crust
                     if "Thin Crust" in row['Description']:
                         col1, col2 = st.columns(2)
-                        with col1: cases = clean_input(f"Cases", key=f"c_{index}")
-                        with col2: sleeves = clean_input(f"Sleeves", key=f"s_{index}")
+                        with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
+                        with col2: sleeves = clean_input(f"Sleeves", key=f"s_{index}_{section}")
                         total = cases + (sleeves * 0.25)
                         
                     # Prep Rack specific
                     elif section == "Prep Rack":
                         col1, col2 = st.columns(2)
-                        with col1: mid = clean_input(f"Backups ({unit}s)", key=f"m_{index}")
-                        with col2: lexans = clean_input(f"Lexans/Bottles", key=f"l_{index}", step=0.25)
+                        with col1: mid = clean_input(f"Backups ({unit}s)", key=f"m_{index}_{section}")
+                        with col2: lexans = clean_input(f"Lexans/Bottles", key=f"l_{index}_{section}", step=0.25)
                         total = mid + (lexans * lexan_mult)
 
-                    # --- MAKELINE SPECIFIC LOGIC (NEW) ---
+                    # Makeline specific logic
                     elif "Makeline" in section:
                         if "PIZZA SAUCE" in row['Description']:
-                            # Pizza Sauce on makeline is only counted in pouches
-                            pouches = clean_input(f"Pouches", key=f"p_{index}")
+                            pouches = clean_input(f"Pouches", key=f"p_{index}_{section}")
                             total = pouches * 1.0
-                            
                         elif "STRING CHEESE" in row['Description']:
-                            # String cheese keeps both Case and Lexan as explicitly requested
                             col1, col2 = st.columns(2)
-                            with col1: cases = clean_input(f"Cases", key=f"c_{index}")
-                            with col2: lexans = clean_input(f"Lexans", key=f"l_{index}", step=0.25)
+                            with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
+                            with col2: lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
                             total = (cases * case_mult) + (lexans * lexan_mult)
-                            
                         elif lexan_mult > 0:
-                            # Standard prepped makeline items only show Lexans
-                            lexans = clean_input(f"Lexans", key=f"l_{index}", step=0.25)
+                            lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
                             total = lexans * lexan_mult
-                            
                         elif case_mult > 1:
-                            # Bulk items under the makeline (like 20lb cheese or Dustinator bags)
                             col1, col2 = st.columns(2)
-                            with col1: cases = clean_input(f"Bulk", key=f"c_{index}")
-                            with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}")
+                            with col1: cases = clean_input(f"Bulk", key=f"c_{index}_{section}")
+                            with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
                             total = (cases * case_mult) + mid
-                            
                         else:
-                            # Single items (like Deli Pepperoni bags)
-                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}")
-                    # ------------------------------------
+                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
                     # Standard Walk-in Lexan Math (3 columns)
                     elif lexan_mult > 0:
                         col1, col2, col3 = st.columns(3)
-                        with col1: cases = clean_input(f"Cases", key=f"c_{index}")
-                        with col2: mid = clean_input(f"{unit}s", key=f"m_{index}")
-                        with col3: lexans = clean_input(f"Lexans", key=f"l_{index}", step=0.25)
+                        with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
+                        with col2: mid = clean_input(f"{unit}s", key=f"m_{index}_{section}")
+                        with col3: lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
                         total = (cases * case_mult) + mid + (lexans * lexan_mult)
                     
-                    # Bulk/Loose Math for non-makeline (2 columns)
+                    # Bulk/Loose Math for non-makeline items (Boxes, Dry Goods, etc.)
                     elif case_mult > 1:
                         col1, col2 = st.columns(2)
-                        with col1: cases = clean_input(f"Bulk", key=f"c_{index}")
-                        with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}")
+                        with col1: cases = clean_input(f"Bulk", key=f"c_{index}_{section}")
+                        with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
                         total = (cases * case_mult) + mid
                         
                     # Direct Single Count for everything else
                     else:
-                        total = clean_input(f"Total Count ({unit})", key=f"t_{index}")
+                        total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
-                    # Store math for final aggregation, stripped of tags
-                    clean_desc = row['Description'].replace(" (Lexan)", "").replace(" (Bottle)", "")
-                    
-                    inventory_totals.append({
-                        "Item #": row['Item_Num'],
-                        "Description": clean_desc,
-                        "Total Count": round(total, 2)
-                    })
-
-# --- 5. THE CORPORATE OUTPUT LAYER ---
-st.markdown("---")
-st.header("Inventory Summary")
-
-if st.button("Generate Final Count Values", type="primary"):
-    final_df = pd.DataFrame(inventory_totals)
-    
-    # 1. Combine all identical Item Numbers across the store
-    consolidated_df = final_df.groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
-    
-    # 2. Sort perfectly by the 4-digit Item Number
-    sorted_df = consolidated_df.sort_values(by="Item #").reset_index(drop=True)
-    
-    st.toast("Totals Generated & Sorted Numerically!", icon="🍕")
-    st.dataframe(sorted_df, use_container_width=True, hide_index=True, height=600)
-    st.success("List is perfectly sorted by Item # to match the Corporate Sheet.")
-
-# --- 6. MOBILE KEYPAD JS INJECTION ---
-components.html(
-    """
-    <script>
-    const inputs = window.parent.document.querySelectorAll('input[type=number]');
-    inputs.forEach(input => {
-        input.setAttribute('inputmode', 'decimal');
-        input.setAttribute('pattern', '[0-9]*');
-    });
-    </script>
-    """,
-    height=0,
-    width=0,
-)
-
+                    clean_desc = row['Description'].replace(" (Lexan
