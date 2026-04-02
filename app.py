@@ -260,6 +260,138 @@ def clean_input(label, key, step=1.0):
 st.title("Inventory Count Engine")
 st.caption("🚀 Secured Architecture | Papa John's Store 04185")
 
+# --- PROGRESS BAR PLACEHOLDER ---
+progress_bar = st.progress(0.0, text="Inventory Completion: 0%")
+st.markdown("<br>", unsafe_allow_html=True) 
+
+inventory_totals = []
+
+sections = [
+    "Walk-in Section", "Prep Rack", "Makeline Section (Top)", "Makeline Section (Bottom)",
+    "Backup Boxes", "Cut Table Section", "Customer Service Counter", "Soda back of store", 
+    "Front of Store Soda", "Dry Goods (Rack 1)", "Dry Goods (Rack 2 - Pizza Sauce)", 
+    "Dry Goods (Rack 3)", "Storage by office desk"
+]
+
+for section in sections:
+    section_data = df[df['Section'] == section]
+    if not section_data.empty:
+        with st.expander(f"📁 {section}", expanded=False):
+            for index, row in section_data.iterrows():
+                item_desc = f"{row['Item_Num']} - {row['Description']}"
+                unit = row['Unit']
+                case_mult = row['Case_Mult']
+                lexan_mult = row['Lexan_Mult']
+                
+                with st.container(border=True):
+                    st.markdown(f"**{item_desc}**")
+                    
+                    if "Thin Crust" in row['Description']:
+                        col1, col2 = st.columns(2)
+                        with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
+                        with col2: sleeves = clean_input(f"Sleeves", key=f"s_{index}_{section}")
+                        total = cases + (sleeves * 0.25)
+                        
+                    elif section == "Prep Rack":
+                        col1, col2 = st.columns(2)
+                        with col1: mid = clean_input(f"Backups ({unit}s)", key=f"m_{index}_{section}")
+                        with col2: lexans = clean_input(f"Lexans/Bottles", key=f"l_{index}_{section}", step=0.25)
+                        total = mid + (lexans * lexan_mult)
+
+                    elif "Makeline" in section:
+                        if "PIZZA SAUCE" in row['Description']:
+                            pouches = clean_input(f"Pouches", key=f"p_{index}_{section}")
+                            total = pouches * 1.0
+                        elif "STRING CHEESE" in row['Description']:
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
+                            with col2: lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
+                            total = (cases * case_mult) + (lexans * lexan_mult)
+                        elif lexan_mult > 0:
+                            lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
+                            total = lexans * lexan_mult
+                        elif case_mult > 1:
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input(f"Bulk", key=f"c_{index}_{section}")
+                            with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
+                            total = (cases * case_mult) + mid
+                        else:
+                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
+
+                    elif lexan_mult > 0:
+                        col1, col2, col3 = st.columns(3)
+                        with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
+                        with col2: mid = clean_input(f"{unit}s", key=f"m_{index}_{section}")
+                        with col3: lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
+                        total = (cases * case_mult) + mid + (lexans * lexan_mult)
+                    
+                    elif case_mult > 1:
+                        col1, col2 = st.columns(2)
+                        with col1: cases = clean_input(f"Bulk", key=f"c_{index}_{section}")
+                        with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
+                        total = (cases * case_mult) + mid
+                        
+                    else:
+                        total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
+
+                    clean_desc = row['Description'].replace(" (Lexan)", "").replace(" (Bottle)", "")
+                    
+                    inventory_totals.append({
+                        "Item #": row['Item_Num'],
+                        "D
+                        # --- Dry Goods (Rack 1) ---
+    [3007, "Cup 22oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
+    [1135, "Buffalo Sauce (Pouch)", "Pouch", "Dry Goods (Rack 1)", 8.0, 1.0],
+    [1140, "Pouch Honey Chptl", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
+    [1150, "Garlic Parm Truffle Sc", "Pouch", "Dry Goods (Rack 1)", 12.0, 0.5],
+    [1148, "BBQ Bulk", "Bag", "Dry Goods (Rack 1)", 8.0, 1.0],
+    [1241, "Pepperoncini Peppers", "Bag", "Dry Goods (Rack 1)", 6.0, 1.0],
+    [1031, "Black Olives", "Pouch", "Dry Goods (Rack 1)", 6.0, 1.0],
+    [1209, "Banana Peppers", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
+    [1210, "Jalapeno Peppers", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
+    [1191, "IT Seasoning", "Bag", "Dry Goods (Rack 1)", 1.0, 0.0],
+    [1047, "PINEAPPLE - POUCH", "Pouch", "Dry Goods (Rack 1)", 6.0, 0.5],
+
+    # --- Dry Goods (Rack 2 - Pizza Sauce) ---
+    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Dry Goods (Rack 2 - Pizza Sauce)", 6.0, 3.0], 
+
+    # --- Dry Goods (Rack 3) ---
+    [1118, "BBQ Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [1117, "Buffalo Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2065, "Tray, Garlic Breadstick", "Each", "Dry Goods (Rack 3)", 150.0, 0.0],
+    [2071, "Garlic Knot Tray", "Each", "Dry Goods (Rack 3)", 125.0, 0.0],
+    [2307, "Corrugated Pizza Sleeve", "Case", "Dry Goods (Rack 3)", 100.0, 0.0],
+    [3044, "Dessert Bag", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3042, "10in Baking Sheet", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3040, "14in Baking Sheet", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2039, "Pop Up Foil", "Case", "Dry Goods (Rack 3)", 6.0, 0.0],
+    [3012, "SOUFFLE CUP, HINGED LID", "Case", "Dry Goods (Rack 3)", 40.0, 0.0],
+    [2305, "Medium Weight Plastic fork", "Case", "Dry Goods (Rack 3)", 1000.0, 0.0],
+    [2047, "CHICKEN BOX", "Each", "Dry Goods (Rack 3)", 240.0, 0.0],
+    [3065, "Logo Napkins (Sleeve)", "Case", "Dry Goods (Rack 3)", 32.0, 0.0],
+
+    [2031, "Blaster Labels", "Roll", "Storage by office desk", 16.0, 0.0]
+]
+
+# Convert to DataFrame
+df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
+
+# --- 4. THE UI RENDER ENGINE WITH FAILSAFE ---
+def clean_input(label, key, step=1.0):
+    try:
+        val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
+        return val if val is not None else 0.0
+    except Exception:
+        val = st.number_input(label, min_value=0.0, step=step, value=0.0, key=key)
+        return val
+
+st.title("Inventory Count Engine")
+st.caption("🚀 Secured Architecture | Papa John's Store 04185")
+
+# --- PROGRESS BAR PLACEHOLDER ---
+progress_bar = st.progress(0.0, text="Inventory Completion: 0%")
+st.markdown("<br>", unsafe_allow_html=True) 
+
 inventory_totals = []
 
 sections = [
@@ -337,6 +469,15 @@ for section in sections:
                         "Description": clean_desc,
                         "Total Count": round(total, 2)
                     })
+
+# --- PROGRESS BAR MATH ---
+total_tasks = len(inventory_totals)
+completed_tasks = sum(1 for item in inventory_totals if item["Total Count"] > 0)
+
+if total_tasks > 0:
+    progress_fraction = completed_tasks / total_tasks
+    percent_complete = int(progress_fraction * 100)
+    progress_bar.progress(progress_fraction, text=f"🔥 Inventory Completion: {percent_complete}% ({completed_tasks} of {total_tasks} locations counted)")
 
 # --- 5. THE CORPORATE OUTPUT LAYER ---
 st.markdown("---")
