@@ -146,18 +146,18 @@ master_inventory = [
     [1257, "Three Cheese Blend", "Bag", "Makeline Section (Bottom)", 2.0, 0.5],
     [1331, "STRING CHEESE 20 LB", "Bag", "Makeline Section (Bottom)", 1.0, 0.25],
 
-    # --- NEW: Backup Boxes (Separate from Cut Table) ---
+    # --- Backup Boxes (Separate from Cut Table) ---
     [2043, "Pizza Box 8", "Each", "Backup Boxes", 50.0, 0.0],
     [2005, "Pizza Box 10", "Each", "Backup Boxes", 50.0, 0.0],
     [2007, "Pizza Box 12", "Each", "Backup Boxes", 50.0, 0.0],
     [2010, "Pizza Box 14", "Each", "Backup Boxes", 50.0, 0.0],
     [2025, "Pizza Box 16 In", "Each", "Backup Boxes", 50.0, 0.0],
     [2146, "Sandwich Box", "Each", "Backup Boxes", 50.0, 0.0],
-    [2047, "CHICKEN BOX", "Each", "Backup Boxes", 240.0, 0.0], # Wing Box Backups
+    [2047, "CHICKEN BOX", "Each", "Backup Boxes", 240.0, 0.0],
 
-    # --- UPDATED: Cut Table Section ---
+    # --- Cut Table Section ---
     [2146, "Sandwich Box", "Each", "Cut Table Section", 50.0, 0.0],
-    [2047, "CHICKEN BOX", "Each", "Cut Table Section", 240.0, 0.0], # Wing Box
+    [2047, "CHICKEN BOX", "Each", "Cut Table Section", 240.0, 0.0], 
     [2043, "Pizza Box 8", "Each", "Cut Table Section", 50.0, 0.0],
     [2005, "Pizza Box 10", "Each", "Cut Table Section", 50.0, 0.0],
     [2007, "Pizza Box 12", "Each", "Cut Table Section", 50.0, 0.0],
@@ -211,7 +211,7 @@ master_inventory = [
     [6660, "20oz Starry", "Each", "Soda back of store", 24.0, 0.0],
     [6002, "20oz Pepsi ZeroSug", "Each", "Soda back of store", 24.0, 0.0],
 
-    # --- NEW: Dry Goods (Rack 1) ---
+    # --- Dry Goods (Rack 1) ---
     [3007, "Cup 22oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
     [1135, "Buffalo Sauce (Pouch)", "Pouch", "Dry Goods (Rack 1)", 8.0, 1.0],
     [1140, "Pouch Honey Chptl", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
@@ -224,10 +224,10 @@ master_inventory = [
     [1191, "IT Seasoning", "Bag", "Dry Goods (Rack 1)", 1.0, 0.0],
     [1047, "PINEAPPLE - POUCH", "Pouch", "Dry Goods (Rack 1)", 6.0, 0.5],
 
-    # --- NEW: Dry Goods (Rack 2 - Pizza Sauce) ---
+    # --- Dry Goods (Rack 2 - Pizza Sauce) ---
     [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Dry Goods (Rack 2 - Pizza Sauce)", 6.0, 3.0], 
 
-    # --- NEW: Dry Goods (Rack 3) ---
+    # --- Dry Goods (Rack 3) ---
     [1118, "BBQ Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [1117, "Buffalo Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [2065, "Tray, Garlic Breadstick", "Each", "Dry Goods (Rack 3)", 150.0, 0.0],
@@ -333,4 +333,6 @@ for section in sections:
                     else:
                         total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
-                    clean_desc = row['Description'].replace(" (Lexan
+                    clean_desc = row['Description'].replace(" (Lexan)", "").replace(" (Bottle)", "")
+                    
+    
