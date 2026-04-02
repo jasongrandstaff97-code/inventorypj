@@ -254,7 +254,6 @@ def clean_input(label, key, step=1.0):
         val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
         return val if val is not None else 0.0
     except Exception:
-        # Failsafe: If the server rejects empty boxes, fall back to default zero instead of crashing
         val = st.number_input(label, min_value=0.0, step=step, value=0.0, key=key)
         return val
 
@@ -336,4 +335,38 @@ for section in sections:
                     inventory_totals.append({
                         "Item #": row['Item_Num'],
                         "Description": clean_desc,
-                    
+                        "Total Count": round(total, 2)
+                    })
+
+# --- 
+st# --- 5. THE CORPORATE OUTPUT LAYER ---
+st.markdown("---")
+st.header("Inventory Summary")
+
+if st.button("Generate Final Count Values", type="primary"):
+    final_df = pd.DataFrame(inventory_totals)
+    
+    # 1. Combine all identical Item Numbers across the store
+    consolidated_df = final_df.groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
+    
+    # 2. Sort perfectly by the 4-digit Item Number
+    sorted_df = consolidated_df.sort_values(by="Item #").reset_index(drop=True)
+    
+    st.toast("Totals Generated & Sorted Numerically!", icon="🍕")
+    st.dataframe(sorted_df, use_container_width=True, hide_index=True, height=600)
+    st.success("List is perfectly sorted by Item # to match the Corporate Sheet.")
+
+# --- 6. MOBILE KEYPAD JS INJECTION ---
+components.html(
+    """
+    <script>
+    const inputs = window.parent.document.querySelectorAll('input[type=number]');
+    inputs.forEach(input => {
+        input.setAttribute('inputmode', 'decimal');
+        input.setAttribute('pattern', '[0-9]*');
+    });
+    </script>
+    """,
+    height=0,
+    width=0,
+)
