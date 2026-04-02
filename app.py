@@ -248,17 +248,21 @@ master_inventory = [
 # Convert to DataFrame
 df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
 
-# --- 4. THE UI RENDER ENGINE ---
+# --- 4. THE UI RENDER ENGINE WITH FAILSAFE ---
 def clean_input(label, key, step=1.0):
-    val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
-    return val if val is not None else 0.0
+    try:
+        val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
+        return val if val is not None else 0.0
+    except Exception:
+        # Failsafe: If the server rejects empty boxes, fall back to default zero instead of crashing
+        val = st.number_input(label, min_value=0.0, step=step, value=0.0, key=key)
+        return val
 
 st.title("Inventory Count Engine")
 st.caption("🚀 Secured Architecture | Papa John's Store 04185")
 
 inventory_totals = []
 
-# Updated walk-path order perfectly matching new racks and box sections
 sections = [
     "Walk-in Section", "Prep Rack", "Makeline Section (Top)", "Makeline Section (Bottom)",
     "Backup Boxes", "Cut Table Section", "Customer Service Counter", "Soda back of store", 
@@ -279,21 +283,18 @@ for section in sections:
                 with st.container(border=True):
                     st.markdown(f"**{item_desc}**")
                     
-                    # Special Logic for Thin Crust
                     if "Thin Crust" in row['Description']:
                         col1, col2 = st.columns(2)
                         with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
                         with col2: sleeves = clean_input(f"Sleeves", key=f"s_{index}_{section}")
                         total = cases + (sleeves * 0.25)
                         
-                    # Prep Rack specific
                     elif section == "Prep Rack":
                         col1, col2 = st.columns(2)
                         with col1: mid = clean_input(f"Backups ({unit}s)", key=f"m_{index}_{section}")
                         with col2: lexans = clean_input(f"Lexans/Bottles", key=f"l_{index}_{section}", step=0.25)
                         total = mid + (lexans * lexan_mult)
 
-                    # Makeline specific logic
                     elif "Makeline" in section:
                         if "PIZZA SAUCE" in row['Description']:
                             pouches = clean_input(f"Pouches", key=f"p_{index}_{section}")
@@ -314,7 +315,6 @@ for section in sections:
                         else:
                             total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
-                    # Standard Walk-in Lexan Math (3 columns)
                     elif lexan_mult > 0:
                         col1, col2, col3 = st.columns(3)
                         with col1: cases = clean_input(f"Cases", key=f"c_{index}_{section}")
@@ -322,17 +322,18 @@ for section in sections:
                         with col3: lexans = clean_input(f"Lexans", key=f"l_{index}_{section}", step=0.25)
                         total = (cases * case_mult) + mid + (lexans * lexan_mult)
                     
-                    # Bulk/Loose Math for non-makeline items (Boxes, Dry Goods, etc.)
                     elif case_mult > 1:
                         col1, col2 = st.columns(2)
                         with col1: cases = clean_input(f"Bulk", key=f"c_{index}_{section}")
                         with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
                         total = (cases * case_mult) + mid
                         
-                    # Direct Single Count for everything else
                     else:
                         total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
                     clean_desc = row['Description'].replace(" (Lexan)", "").replace(" (Bottle)", "")
                     
-    
+                    inventory_totals.append({
+                        "Item #": row['Item_Num'],
+                        "Description": clean_desc,
+                    
