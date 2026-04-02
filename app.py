@@ -237,8 +237,17 @@ master_inventory = [
     [3042, "10in Baking Sheet", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [3040, "14in Baking Sheet", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [2039, "Pop Up Foil", "Case", "Dry Goods (Rack 3)", 6.0, 0.0],
-    [3012, "SOUFFLE
-     # --- 4. THE UI RENDER ENGINE WITH FAILSAFE ---
+    [3012, "SOUFFLE CUP, HINGED LID", "Case", "Dry Goods (Rack 3)", 40.0, 0.0],
+    [2305, "Medium Weight Plastic fork", "Case", "Dry Goods (Rack 3)", 1000.0, 0.0],
+    [2047, "CHICKEN BOX", "Each", "Dry Goods (Rack 3)", 240.0, 0.0],
+    [3065, "Logo Napkins (Sleeve)", "Case", "Dry Goods (Rack 3)", 32.0, 0.0],
+
+    [2031, "Blaster Labels", "Roll", "Storage by office desk", 16.0, 0.0]
+]
+
+# Convert to DataFrame
+df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
+# --- 4. THE UI RENDER ENGINE WITH FAILSAFE ---
 def clean_input(label, key, step=1.0):
     try:
         val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
