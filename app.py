@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(page_title="Juskvi Inventory Engine", layout="centered", initial_sidebar_state="collapsed")
@@ -17,7 +18,7 @@ st.markdown("""
     .stButton>button:hover {background-color: #9c0c20 !important; box-shadow: 0px 6px 15px rgba(223, 25, 52, 0.5);}
     
     /* Clean up the input boxes - remove arrows and center text */
-    input[type="number"] {text-align: center !important; font-size: 1.2rem !important; font-weight: bold !important;}
+    input[type="number"] {text-align: center !important; font-size: 1.3rem !important; font-weight: bold !important;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -42,10 +43,8 @@ if not st.session_state['logged_in']:
     st.stop()
 
 # --- 3. THE MASTER DATA DICTIONARY ---
-# Format: [Item_Number, Description, Target_Unit, Section, Case_Multiplier, Lexan_Bottle_Multiplier]
-
 master_inventory = [
-    # --- WALK-IN SECTION (Ordered Exactly per Transcript) ---
+    # Walk-in Section 
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
     [1075, "Dough Tray 10", "Tray", "Walk-in Section", 1.0, 0.0],
     [1076, "DOUGH M, 12 INCH", "Tray", "Walk-in Section", 1.0, 0.0],
@@ -71,7 +70,7 @@ master_inventory = [
     [1065, "Sausage", "Bag", "Walk-in Section", 4.0, 0.5],
     [1066, "Italian Sausage", "Bag", "Walk-in Section", 4.0, 0.5],
     [1051, "Mushrooms-fresh", "Pail", "Walk-in Section", 2.0, 0.5],
-    [1074, "Frozen Thin Crust 14\"", "Case", "Walk-in Section", 1.0, 0.0], # Has special Sleeve logic in UI
+    [1074, "Frozen Thin Crust 14\"", "Case", "Walk-in Section", 1.0, 0.0],
     [1105, "Garlic Sauce Cups", "Case", "Walk-in Section", 1.0, 0.0],
     [1102, "Spicy Garlic Dipping Cup", "Case", "Walk-in Section", 1.0, 0.0],
     [1114, "Ranch Sauce Cups", "Case", "Walk-in Section", 1.0, 0.0],
@@ -80,46 +79,47 @@ master_inventory = [
     [1251, "Sliced American Cheese", "Bag", "Walk-in Section", 4.0, 0.33],
     [1111, "7\" Sandwich Roll", "Bag", "Walk-in Section", 4.0, 0.0],
     [1150, "Garlic Parm Truffle Sc", "Pouch", "Walk-in Section", 12.0, 0.5],
-    [1331, "STRING CHEESE 20 LB", "Bag", "Walk-in Section", 1.0, 0.25], # Case and Lexan requested
+    [1331, "STRING CHEESE 20 LB", "Bag", "Walk-in Section", 1.0, 0.25], 
     [1104, "Jug Garlic Sauce", "Bottle", "Walk-in Section", 10.0, 0.0],
     [1057, "20lb PIZZA CHEESE", "Each", "Walk-in Section", 1.0, 0.0],
     [1152, "Sauce, Pizza Ranch", "Bag", "Walk-in Section", 12.0, 0.5],
     [1040, "Pepperoni", "Bag", "Walk-in Section", 2.0, 0.25],
 
-    # --- PREP RACK SECTION (Lexans & Bottles) ---
-    [1002, "Ranch (Lexan)", "Pouch", "Prep Rack", 8.0, 1.0],
-    [1218, "Alfredo (Lexan)", "Pouch", "Prep Rack", 3.0, 1.0],
-    [1148, "BBQ Sauce (Lexan)", "Bag", "Prep Rack", 8.0, 1.0],
-    [1052, "Spinach (Lexan)", "Bag", "Prep Rack", 4.0, 1.0],
-    [1051, "Mushrooms (Lexan)", "Pail", "Prep Rack", 2.0, 0.5],
-    [1066, "Italian Sausage (Lexan)", "Bag", "Prep Rack", 4.0, 0.5],
-    [1065, "Sausage (Lexan)", "Bag", "Prep Rack", 4.0, 0.5],
-    [1064, "Beef (Lexan)", "Bag", "Prep Rack", 2.0, 0.5],
-    [1178, "Philly Steak (Lexan)", "Bag", "Prep Rack", 4.0, 0.5],
-    [1167, "Canadian Bacon (Lexan)", "Bag", "Prep Rack", 2.0, 1.0],
-    [1049, "Bacon (Lexan)", "Bag", "Prep Rack", 4.0, 1.0],
-    [1241, "Pepperoncini (Lexan)", "Bag", "Prep Rack", 6.0, 1.0],
-    [1031, "Black Olives (Lexan)", "Pouch", "Prep Rack", 6.0, 1.0],
-    [1047, "Pineapple (Lexan)", "Pouch", "Prep Rack", 6.0, 0.5],
-    [1095, "Chicken (Lexan)", "Bag", "Prep Rack", 2.0, 0.5],
-    [1159, "2 Cheese (Lexan)", "Bag", "Prep Rack", 2.0, 0.33],
-    [1019, "Tomato (Lexan)", "Tray", "Prep Rack", 2.0, 0.5],
-    [1016, "Green Pepper (Lexan)", "Bag", "Prep Rack", 4.0, 0.5],
-    [1017, "Onion (Lexan)", "Bag", "Prep Rack", 4.0, 0.5],
-    [1209, "Banana Pepper (Lexan)", "Bag", "Prep Rack", 8.0, 0.25],
-    [1210, "Jalapeno (Lexan)", "Bag", "Prep Rack", 8.0, 0.25],
-    [1150, "Garlic Parm (Bottle)", "Pouch", "Prep Rack", 12.0, 0.5],
-    [1135, "Buffalo Sauce (Bottle)", "Pouch", "Prep Rack", 8.0, 1.0],
-    [1148, "BBQ Sauce (Bottle)", "Bag", "Prep Rack", 8.0, 0.25],
-    [1150, "Garlic Truffle (Bottle)", "Pouch", "Prep Rack", 12.0, 0.5],
-    [1140, "Honey Chipotle (Bottle)", "Pouch", "Prep Rack", 10.0, 1.0],
-    [1104, "Garlic Sauce Jug (Bottle)", "Bottle", "Prep Rack", 10.0, 1.0],
-    [1152, "Pizza Ranch (Bottle)", "Bag", "Prep Rack", 12.0, 0.5],
-    [1092, "Roasted Wings (Lexan)", "Bag", "Prep Rack", 4.0, 1.0],
-    [1093, "Boneless Wings (Lexan)", "Bag", "Prep Rack", 2.0, 1.0],
-    [1040, "Pepperoni (Lexan)", "Bag", "Prep Rack", 2.0, 0.25],
+    # Prep Rack Section 
+    [1002, "Ranch", "Pouch", "Prep Rack", 8.0, 1.0],
+    [1218, "Alfredo", "Pouch", "Prep Rack", 3.0, 1.0],
+    [1148, "BBQ Sauce", "Bag", "Prep Rack", 8.0, 1.0],
+    [1052, "Spinach", "Bag", "Prep Rack", 4.0, 1.0],
+    [1051, "Mushrooms", "Pail", "Prep Rack", 2.0, 0.5],
+    [1066, "Italian Sausage", "Bag", "Prep Rack", 4.0, 0.5],
+    [1065, "Sausage", "Bag", "Prep Rack", 4.0, 0.5],
+    [1064, "Beef", "Bag", "Prep Rack", 2.0, 0.5],
+    [1178, "Philly Steak", "Bag", "Prep Rack", 4.0, 0.5],
+    [1167, "Canadian Bacon", "Bag", "Prep Rack", 2.0, 1.0],
+    [1049, "Bacon", "Bag", "Prep Rack", 4.0, 1.0],
+    [1241, "Pepperoncini", "Bag", "Prep Rack", 6.0, 1.0],
+    [1031, "Black Olives", "Pouch", "Prep Rack", 6.0, 1.0],
+    [1047, "Pineapple", "Pouch", "Prep Rack", 6.0, 0.5],
+    [1095, "Chicken", "Bag", "Prep Rack", 2.0, 0.5],
+    [1159, "2 Cheese", "Bag", "Prep Rack", 2.0, 0.33],
+    [1019, "Tomato", "Tray", "Prep Rack", 2.0, 0.5],
+    [1016, "Green Pepper", "Bag", "Prep Rack", 4.0, 0.5],
+    [1017, "Onion", "Bag", "Prep Rack", 4.0, 0.5],
+    [1209, "Banana Pepper", "Bag", "Prep Rack", 8.0, 0.25],
+    [1210, "Jalapeno", "Bag", "Prep Rack", 8.0, 0.25],
+    [1150, "Garlic Parm", "Pouch", "Prep Rack", 12.0, 0.5],
+    [1135, "Buffalo Sauce", "Pouch", "Prep Rack", 8.0, 1.0],
+    [1148, "BBQ Sauce", "Bag", "Prep Rack", 8.0, 0.25],
+    [1150, "Garlic Truffle", "Pouch", "Prep Rack", 12.0, 0.5],
+    [1140, "Honey Chipotle", "Pouch", "Prep Rack", 10.0, 1.0],
+    [1104, "Garlic Sauce Jug", "Bottle", "Prep Rack", 10.0, 1.0],
+    [1152, "Pizza Ranch", "Bag", "Prep Rack", 12.0, 0.5],
+    [1092, "Roasted Wings", "Bag", "Prep Rack", 4.0, 1.0],
+    [1093, "Boneless Wings", "Bag", "Prep Rack", 2.0, 1.0],
+    [1040, "Pepperoni", "Bag", "Prep Rack", 2.0, 0.25],
 
-    # --- RETAINED MAKELINE & FRONT SECTIONS ---
+    # Makeline & Front Sections 
+    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Makeline Section (Bottom)", 6.0, 3.0], # Added to Makeline for Pouches
     [1016, "Green Peppers, Sliced", "Bag", "Makeline Section (Top)", 4.0, 0.5],
     [1017, "Onions, Sliced", "Bag", "Makeline Section (Top)", 4.0, 0.5],
     [1019, "Tomatoes, Diced Roma", "Tray", "Makeline Section (Top)", 2.0, 0.5],
@@ -192,10 +192,9 @@ master_inventory = [
 
 # Convert to DataFrame
 df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
-df['Corporate_Order'] = df.index + 1
 
 # --- 4. THE UI RENDER ENGINE ---
-# Helper function to create clean, blank inputs
+# Helper function for blank inputs
 def clean_input(label, key, step=1.0):
     val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
     return val if val is not None else 0.0
@@ -224,23 +223,52 @@ for section in sections:
                 with st.container(border=True):
                     st.markdown(f"**{item_desc}**")
                     
-                    # Special Logic for Thin Crust (Cases and Sleeves)
+                    # Special Logic for Thin Crust
                     if "Thin Crust" in row['Description']:
                         col1, col2 = st.columns(2)
                         with col1: cases = clean_input(f"Cases", key=f"c_{index}")
                         with col2: sleeves = clean_input(f"Sleeves", key=f"s_{index}")
-                        total = cases + (sleeves * 0.25) # Adjust multiplier if needed
+                        total = cases + (sleeves * 0.25)
                         
-                    # Prep Rack specific - streamlined input
+                    # Prep Rack specific
                     elif section == "Prep Rack":
-                        if "(Bottle)" in row['Description']:
-                            bottles = clean_input(f"Bottles", key=f"b_{index}")
-                            total = bottles * lexan_mult
-                        else:
+                        col1, col2 = st.columns(2)
+                        with col1: mid = clean_input(f"Backups ({unit}s)", key=f"m_{index}")
+                        with col2: lexans = clean_input(f"Lexans/Bottles", key=f"l_{index}", step=0.25)
+                        total = mid + (lexans * lexan_mult)
+
+                    # --- MAKELINE SPECIFIC LOGIC (NEW) ---
+                    elif "Makeline" in section:
+                        if "PIZZA SAUCE" in row['Description']:
+                            # Pizza Sauce on makeline is only counted in pouches
+                            pouches = clean_input(f"Pouches", key=f"p_{index}")
+                            total = pouches * 1.0
+                            
+                        elif "STRING CHEESE" in row['Description']:
+                            # String cheese keeps both Case and Lexan as explicitly requested
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input(f"Cases", key=f"c_{index}")
+                            with col2: lexans = clean_input(f"Lexans", key=f"l_{index}", step=0.25)
+                            total = (cases * case_mult) + (lexans * lexan_mult)
+                            
+                        elif lexan_mult > 0:
+                            # Standard prepped makeline items only show Lexans
                             lexans = clean_input(f"Lexans", key=f"l_{index}", step=0.25)
                             total = lexans * lexan_mult
+                            
+                        elif case_mult > 1:
+                            # Bulk items under the makeline (like 20lb cheese or Dustinator bags)
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input(f"Bulk", key=f"c_{index}")
+                            with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}")
+                            total = (cases * case_mult) + mid
+                            
+                        else:
+                            # Single items (like Deli Pepperoni bags)
+                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}")
+                    # ------------------------------------
 
-                    # Standard Lexan Math (3 columns)
+                    # Standard Walk-in Lexan Math (3 columns)
                     elif lexan_mult > 0:
                         col1, col2, col3 = st.columns(3)
                         with col1: cases = clean_input(f"Cases", key=f"c_{index}")
@@ -248,23 +276,24 @@ for section in sections:
                         with col3: lexans = clean_input(f"Lexans", key=f"l_{index}", step=0.25)
                         total = (cases * case_mult) + mid + (lexans * lexan_mult)
                     
-                    # Bulk/Loose Math (2 columns)
+                    # Bulk/Loose Math for non-makeline (2 columns)
                     elif case_mult > 1:
                         col1, col2 = st.columns(2)
                         with col1: cases = clean_input(f"Bulk", key=f"c_{index}")
                         with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}")
                         total = (cases * case_mult) + mid
                         
-                    # Direct Single Count (1 column)
+                    # Direct Single Count for everything else
                     else:
                         total = clean_input(f"Total Count ({unit})", key=f"t_{index}")
 
-                    # Store math for final aggregation
+                    # Store math for final aggregation, stripped of tags
+                    clean_desc = row['Description'].replace(" (Lexan)", "").replace(" (Bottle)", "")
+                    
                     inventory_totals.append({
-                        "Order": row['Corporate_Order'],
                         "Item #": row['Item_Num'],
-                        "Description": row['Description'].replace(" (Lexan)", "").replace(" (Bottle)", ""),
-                        f"Final {unit}s": round(total, 2)
+                        "Description": clean_desc,
+                        "Total Count": round(total, 2)
                     })
 
 # --- 5. THE CORPORATE OUTPUT LAYER ---
@@ -274,16 +303,28 @@ st.header("Inventory Summary")
 if st.button("Generate Final Count Values", type="primary"):
     final_df = pd.DataFrame(inventory_totals)
     
-    # Aggregates Walk-in + Prep Rack + Makeline perfectly based on Item #
-    consolidated_df = final_df.groupby(['Item #', 'Description'], as_index=False).agg(
-        Order=('Order', 'min'), # Keep the lowest order number for sorting
-        Final_Total=(final_df.columns[3], 'sum') # Sum the totals
-    )
+    # 1. Combine all identical Item Numbers across the store
+    consolidated_df = final_df.groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
     
-    sorted_df = consolidated_df.sort_values(by="Order").reset_index(drop=True)
-    display_df = sorted_df[['Item #', 'Description', 'Final_Total']]
-    display_df.rename(columns={'Final_Total': 'Total Count'}, inplace=True)
+    # 2. Sort perfectly by the 4-digit Item Number
+    sorted_df = consolidated_df.sort_values(by="Item #").reset_index(drop=True)
     
-    st.toast("Totals Generated & Sorted!", icon="🍕")
-    st.dataframe(display_df, use_container_width=True, hide_index=True, height=600)
-    st.success("List is sorted and consolidated for the Corporate System.")
+    st.toast("Totals Generated & Sorted Numerically!", icon="🍕")
+    st.dataframe(sorted_df, use_container_width=True, hide_index=True, height=600)
+    st.success("List is perfectly sorted by Item # to match the Corporate Sheet.")
+
+# --- 6. MOBILE KEYPAD JS INJECTION ---
+components.html(
+    """
+    <script>
+    const inputs = window.parent.document.querySelectorAll('input[type=number]');
+    inputs.forEach(input => {
+        input.setAttribute('inputmode', 'decimal');
+        input.setAttribute('pattern', '[0-9]*');
+    });
+    </script>
+    """,
+    height=0,
+    width=0,
+)
+
