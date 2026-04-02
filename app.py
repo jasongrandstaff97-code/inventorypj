@@ -338,8 +338,7 @@ for section in sections:
                         "Total Count": round(total, 2)
                     })
 
-# --- 
-st# --- 5. THE CORPORATE OUTPUT LAYER ---
+# --- 5. THE CORPORATE OUTPUT LAYER ---
 st.markdown("---")
 st.header("Inventory Summary")
 
