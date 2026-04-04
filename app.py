@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
-st.set_page_config(page_title="Juskvi Inventory Engine v2.2", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Juskvi Inventory Engine v2.3", layout="centered", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -38,9 +38,9 @@ if not st.session_state['logged_in']:
             st.error("Access Denied: Invalid Credentials")
     st.stop()
 
-# --- 3. THE MASTER DATA DICTIONARY (VERSION 2.2) ---
+# --- 3. THE MASTER DATA DICTIONARY (VERSION 2.3) ---
 master_inventory = [
-    # --- UPDATED WALK-IN SECTION ---
+    # --- WALK-IN SECTION ---
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
     [1075, "Dough Tray 10", "Tray", "Walk-in Section", 1.0, 0.0],
     [1076, "DOUGH M, 12 INCH", "Tray", "Walk-in Section", 1.0, 0.0],
@@ -182,7 +182,7 @@ master_inventory = [
     [6203, "2Ltr Mountain Dew", "Each", "Front of Store Soda", 8.0, 0.0],
     [1104, "Jug Garlic Sauce", "Bottle", "Customer Service Counter", 10.0, 0.0],
 
-    # --- RESTORED DRY GOODS ---
+    # --- DRY GOODS ---
     [3007, "Cup 22oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
     [1135, "Buffalo Sauce (Pouch)", "Pouch", "Dry Goods (Rack 1)", 8.0, 1.0],
     [1140, "Pouch Honey Chptl", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
@@ -217,7 +217,7 @@ def clean_input(label, key, step=1.0):
     except Exception:
         return 0.0
 
-st.title("Inventory Count Engine v2.2")
+st.title("Inventory Count Engine v2.3")
 st.caption("🚀 Optimized Architecture | Store 04185")
 
 progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
@@ -247,8 +247,15 @@ for section in sections:
 
                     # 1. UPDATED WALK-IN LOGIC
                     if section == "Walk-in Section":
-                        # Cases & Bags (Most proteins/veggies/Pizza Ranch/Pepperoni)
-                        if lexan_mult == 1.0 and "Ranch Sauce" not in row['Description']:
+                        # Anchovies: Dual Input (Case + Individual Can)
+                        if "Anchovies" in row['Description']:
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
+                            with col2: cans = clean_input("Individual Cans", key=f"i_{index}_{section}")
+                            total = cases + (cans / 25.0)
+
+                        # Cases & Bags (Proteins/veggies/Pizza Ranch/Pepperoni)
+                        elif lexan_mult == 1.0 and "Ranch Sauce" not in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: bags = clean_input("Loose Bags/Pouches", key=f"b_{index}_{section}")
@@ -313,7 +320,7 @@ for section in sections:
                             cases = clean_input("Cases", key=f"c_{index}_{section}")
                             total = cases * case_mult
 
-                        # Default (Anchovies, Pizza Cheese, American)
+                        # Default (Pizza Cheese, American)
                         else:
                             total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
