@@ -134,7 +134,6 @@ master_inventory = [
     [1209, "Banana Peppers", "Bag", "Makeline Section (Top)", 8.0, 0.25],
 
     # --- RE-ENGINEERED MAKELINE BOTTOM (SINGLE-TAB LOGIC) ---
-    [1057, "20lb PIZZA CHEESE", "Each", "Makeline Section (Bottom)", 1.0, 1.0],
     [1218, "Alfredo Sauce", "Pouch", "Makeline Section (Bottom)", 3.0, 1.0],
     [1002, "Bulk Ranch Sauce", "Pouch", "Makeline Section (Bottom)", 8.0, 1.0],
     [1251, "Sliced American Cheese", "Bag", "Makeline Section (Bottom)", 4.0, 0.33],
@@ -152,7 +151,8 @@ master_inventory = [
     [1102, "Spicy Garlic Cups (INDIVIDUAL)", "Unit", "Makeline Section (Bottom)", 1.0, 1.0],
     [1213, "Cheese Sauce Cups (INDIVIDUAL)", "Unit", "Makeline Section (Bottom)", 1.0, 1.0],
     [1040, "Pepperoni (Lexan)", "Bag", "Makeline Section (Bottom)", 2.0, 0.25],
-
+    [1057, "20lb PIZZA CHEESE", "Each", "Makeline Section (Bottom)", 1.0, 1.0],
+  
     # REMAINING SECTIONS (Original logic)
     [2043, "Pizza Box 8", "Each", "Backup Boxes", 50.0, 0.0],
     [2005, "Pizza Box 10", "Each", "Backup Boxes", 50.0, 0.0],
