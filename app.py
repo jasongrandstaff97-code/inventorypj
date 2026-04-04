@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
-st.set_page_config(page_title="Juskvi Inventory Engine v2.3", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Juskvi Inventory Engine v2.5", layout="centered", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -38,7 +38,7 @@ if not st.session_state['logged_in']:
             st.error("Access Denied: Invalid Credentials")
     st.stop()
 
-# --- 3. THE MASTER DATA DICTIONARY (VERSION 2.3) ---
+# --- 3. THE MASTER DATA DICTIONARY ---
 master_inventory = [
     # --- WALK-IN SECTION ---
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
@@ -217,7 +217,7 @@ def clean_input(label, key, step=1.0):
     except Exception:
         return 0.0
 
-st.title("Inventory Count Engine v2.3")
+st.title("Inventory Count Engine v2.5")
 st.caption("🚀 Optimized Architecture | Store 04185")
 
 progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
@@ -243,84 +243,75 @@ for section in sections:
                 with st.container(border=True):
                     st.markdown(f"**{item_desc}**")
                     
-                    # --- SECTION SPECIFIC UI LOGIC ---
-
-                    # 1. UPDATED WALK-IN LOGIC
+                    # 1. WALK-IN LOGIC (Refined for Pepperoni)
                     if section == "Walk-in Section":
-                        # Anchovies: Dual Input (Case + Individual Can)
-                        if "Anchovies" in row['Description']:
+                        # Pepperoni (Cases only - allows 0.5 for bags)
+                        if "Pepperoni" in row['Description']:
+                            cases = clean_input("Cases", key=f"c_{index}_{section}", step=0.5)
+                            total = cases * case_mult
+
+                        elif "Anchovies" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: cans = clean_input("Individual Cans", key=f"i_{index}_{section}")
                             total = cases + (cans / 25.0)
 
-                        # Cases & Bags (Proteins/veggies/Pizza Ranch/Pepperoni)
+                        elif "Bulk Ranch" in row['Description']:
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
+                            with col2: pouches = clean_input("Pouches", key=f"p_{index}_{section}")
+                            total = (cases * case_mult) + pouches
+
                         elif lexan_mult == 1.0 and "Ranch Sauce" not in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: bags = clean_input("Loose Bags/Pouches", key=f"b_{index}_{section}")
                             total = (cases * case_mult) + bags
                         
-                        # Cases & Sleeves (Dough/GF/Thin Crust)
                         elif "Crust" in row['Description'] and "Pan" not in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: sleeves = clean_input("Sleeves", key=f"s_{index}_{section}")
                             total = cases + (sleeves * 0.25)
 
-                        # Pan Pizza (Cases & Loose Bags)
                         elif "Pan Pizza" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: bags = clean_input("Loose Bags", key=f"b_{index}_{section}")
                             total = (cases * case_mult) + bags
 
-                        # Alfredo (Cases & Pouches)
                         elif "Alfredo" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: pouches = clean_input("Pouches", key=f"p_{index}_{section}")
                             total = (cases * case_mult) + pouches
 
-                        # Bulk Ranch (Pouches & Lexans)
-                        elif "Bulk Ranch" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: pouches = clean_input("Pouches", key=f"p_{index}_{section}")
-                            with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}", step=0.25)
-                            total = pouches + (lexans * lexan_mult)
-
-                        # Dipping Cups (Cases & Individual Units)
                         elif "Cups" in row['Description'] and "Case" in row['Unit']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: inds = clean_input("Individual Units", key=f"i_{index}_{section}")
                             total = cases + (inds / row['Case_Mult']) if row['Case_Mult'] > 1 else cases + inds
 
-                        # 7" Sandwich Roll (Case & Lexans)
                         elif "Sandwich Roll" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Case", key=f"c_{index}_{section}")
                             with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}")
                             total = (cases * case_mult) + lexans
 
-                        # String Cheese (Case & Lexan)
                         elif "STRING CHEESE" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Case", key=f"c_{index}_{section}")
                             with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}", step=0.25)
                             total = (cases * case_mult) + (lexans * lexan_mult)
 
-                        # Jug Garlic (Jugs only)
                         elif "Jug Garlic" in row['Description']:
                             jugs = clean_input("Jugs", key=f"j_{index}_{section}")
                             total = jugs
 
-                        # Cases only (Chicken, Wings, Tomatoes, Mushrooms)
                         elif lexan_mult == 0.0 and case_mult > 1.0:
                             cases = clean_input("Cases", key=f"c_{index}_{section}")
                             total = cases * case_mult
 
-                        # Default (Pizza Cheese, American)
                         else:
                             total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
@@ -356,7 +347,7 @@ for section in sections:
                         total = count_val if is_unit else (count_val * lexan_mult)
 
                     # 5. REMAINING STANDARD LOGIC
-                    elif lexan_mult > 0 and section not in ["Makeline Section (Top)", "Makeline Section (Bottom)", "Cut Table Section"]:
+                    elif lexan_mult > 0 and section not in ["Walk-in Section", "Makeline Section (Top)", "Makeline Section (Bottom)", "Cut Table Section"]:
                         col1, col2, col3 = st.columns(3)
                         with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                         with col2: mid = clean_input(f"{unit}s", key=f"m_{index}_{section}")
