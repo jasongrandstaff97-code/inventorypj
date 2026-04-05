@@ -3,104 +3,73 @@ import pandas as pd
 import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
-st.set_page_config(
-    page_title="Juskvi Inventory Engine v2.9", 
-    layout="centered", 
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="Juskvi Engine v3.0", layout="centered")
 
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu, footer, header {visibility: hidden;}
     h1, h2, h3 {color: #00583E !important; font-family: 'Helvetica Neue', sans-serif;}
     
-    /* Expander Styling - Accordion Tableature */
-    div[data-testid="stExpander"] {
-        border: 2px solid #00583E !important; 
-        border-radius: 12px; 
-        margin-bottom: 15px; 
-        background-color: #ffffff;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-    }
-    div[data-testid="stExpander"] summary {
-        background-color: #00583E !important; 
-        color: white !important; 
-        border-radius: 10px; 
-        padding: 18px !important;
-    }
-    div[data-testid="stExpander"] summary p {
+    /* Section Header Button (The Folder Tab) */
+    .stButton > button[kind="primary"] {
+        background-color: #00583E !important;
         color: white !important;
-        font-size: 1.3rem !important; 
+        border: none !important;
+        height: 60px !important;
+        font-size: 1.3rem !important;
         font-weight: bold !important;
-    }
-    
-    /* Input Box Formatting */
-    input[type="number"] {
-        text-align: center !important; 
-        font-size: 1.5rem !important; 
-        font-weight: bold !important; 
-        color: #00583E !important;
-        background-color: #f0f2f6 !important;
+        text-align: left !important;
+        padding-left: 20px !important;
         border-radius: 10px !important;
+        margin-bottom: 5px !important;
     }
 
-    /* Primary Red Buttons */
-    .stButton>button {
-        background-color: #DF1934 !important; 
-        color: white !important; 
-        border-radius: 10px; 
-        font-weight: bold; 
-        font-size: 1.2rem !important; 
-        padding: 20px !important; 
-        width: 100%; 
-        border: none;
-        text-transform: uppercase;
+    /* Red Action Buttons */
+    .stButton > button[kind="secondary"] {
+        background-color: #DF1934 !important;
+        color: white !important;
+        border: none !important;
+        height: 55px !important;
+        font-weight: bold !important;
+        font-size: 1.1rem !important;
+        text-transform: uppercase !important;
+        box-shadow: 0px 4px 10px rgba(223, 25, 52, 0.3) !important;
+    }
+
+    /* Input Numbers */
+    input[type="number"] {
+        text-align: center !important;
+        font-size: 1.4rem !important;
+        font-weight: bold !important;
+        color: #00583E !important;
     }
     
-    /* Collapse Button Logic */
-    div.stButton > button[kind="secondary"] {
-        background-color: #4a4a4a !important;
-        color: white !important;
-        border: 2px solid #333 !important;
-        height: 60px !important;
-        font-size: 1.1rem !important;
-        margin-top: 20px;
+    /* Container Background */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #ffffff !important;
+        border: 2px solid #eee !important;
+        padding: 10px !important;
+        border-radius: 15px !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SECURITY & ACCORDION STATE MANAGEMENT ---
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
+# --- 2. SECURITY & VISIBILITY STATE ---
+if 'auth' not in st.session_state: st.session_state['auth'] = False
+if 'open_section' not in st.session_state: st.session_state['open_section'] = None
 
-# We use 'section_keys' to force expanders to close programmatically
-if 'section_keys' not in st.session_state:
-    st.session_state['section_keys'] = {
-        "Walk-in Section": 0, "Prep Rack": 0, "Makeline Section (Top)": 0, 
-        "Makeline Section (Bottom)": 0, "Cut Table Section": 0, "Soda back of store": 0, 
-        "Dry Goods (Rack 1)": 0, "Dry Goods (Rack 2 - Pizza Sauce)": 0, 
-        "Dry Goods (Rack 3)": 0, "Storage by office desk": 0
-    }
-
-if not st.session_state['logged_in']:
-    st.title("Papa John's Inventory System")
-    st.caption("Store 04185 | Authorized Personnel Only")
-    st.divider()
-    username = st.text_input("User ID")
-    password = st.text_input("Password", type="password")
-    if st.button("SECURE LOGIN"):
-        if username == "MGR" and password == "Papa4185":
-            st.session_state['logged_in'] = True
+if not st.session_state['auth']:
+    st.title("Store 04185 Inventory")
+    u, p = st.text_input("User ID"), st.text_input("Password", type="password")
+    if st.button("SECURE LOGIN", kind="secondary"):
+        if u == "MGR" and p == "Papa4185":
+            st.session_state['auth'] = True
             st.rerun()
-        else:
-            st.error("Access Denied: Invalid Credentials")
     st.stop()
 
-# --- 3. THE MASTER DATA DICTIONARY (VERBOSE SCALE) ---
+# --- 3. MASTER DATA ---
 master_inventory = [
-    # --- WALK-IN SECTION ---
+    # WALK-IN
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
     [1075, "Dough Tray 10", "Tray", "Walk-in Section", 1.0, 0.0],
     [1076, "DOUGH M, 12 INCH", "Tray", "Walk-in Section", 1.0, 0.0],
@@ -138,39 +107,7 @@ master_inventory = [
     [1057, "20lb PIZZA CHEESE", "Each", "Walk-in Section", 1.0, 0.0],
     [1152, "Sauce, Pizza Ranch", "Bag", "Walk-in Section", 12.0, 1.0],
     [1040, "Pepperoni", "Bag", "Walk-in Section", 2.0, 1.0],
-
-    # --- PREP RACK ---
-    [1002, "Ranch", "Pouch", "Prep Rack", 8.0, 1.0],
-    [1218, "Alfredo", "Pouch", "Prep Rack", 3.0, 1.0],
-    [1148, "BBQ Sauce", "Bag", "Prep Rack", 8.0, 1.0],
-    [1052, "Spinach", "Bag", "Prep Rack", 4.0, 1.0],
-    [1051, "Mushrooms", "Pail", "Prep Rack", 2.0, 0.5],
-    [1066, "Italian Sausage", "Bag", "Prep Rack", 4.0, 0.5],
-    [1065, "Sausage", "Bag", "Prep Rack", 4.0, 0.5],
-    [1064, "Beef", "Bag", "Prep Rack", 2.0, 0.5],
-    [1178, "Philly Steak", "Bag", "Prep Rack", 4.0, 0.5],
-    [1167, "Canadian Bacon", "Bag", "Prep Rack", 2.0, 1.0],
-    [1049, "Bacon", "Bag", "Prep Rack", 4.0, 1.0],
-    [1241, "Pepperoncini", "Bag", "Prep Rack", 6.0, 1.0],
-    [1031, "Black Olives", "Pouch", "Prep Rack", 6.0, 1.0],
-    [1047, "Pineapple", "Pouch", "Prep Rack", 6.0, 0.5],
-    [1095, "Chicken", "Bag", "Prep Rack", 2.0, 0.5],
-    [1159, "2 Cheese", "Bag", "Prep Rack", 2.0, 0.33],
-    [1019, "Tomato", "Tray", "Prep Rack", 2.0, 0.5],
-    [1016, "Green Pepper", "Bag", "Prep Rack", 4.0, 0.5],
-    [1017, "Onion", "Bag", "Prep Rack", 4.0, 0.5],
-    [1209, "Banana Pepper", "Bag", "Prep Rack", 8.0, 0.25],
-    [1210, "Jalapeno", "Bag", "Prep Rack", 8.0, 0.25],
-    [1150, "Garlic Parm", "Pouch", "Prep Rack", 12.0, 0.5],
-    [1135, "Buffalo Sauce", "Pouch", "Prep Rack", 8.0, 1.0],
-    [1140, "Honey Chipotle", "Pouch", "Prep Rack", 10.0, 1.0],
-    [1104, "Garlic Sauce Jug", "Bottle", "Prep Rack", 10.0, 1.0],
-    [1152, "Pizza Ranch", "Bag", "Prep Rack", 12.0, 0.5],
-    [1092, "Roasted Wings", "Bag", "Prep Rack", 4.0, 1.0],
-    [1093, "Boneless Wings", "Bag", "Prep Rack", 2.0, 1.0],
-    [1040, "Pepperoni", "Bag", "Prep Rack", 2.0, 0.25],
-
-    # --- MAKELINE TOP ---
+    # MAKELINE TOP
     [1331, "String Cheese", "Bag", "Makeline Section (Top)", 1.0, 0.25],
     [1066, "Italian Sausage", "Bag", "Makeline Section (Top)", 4.0, 0.5],
     [1178, "Philly Cheesesteak", "Bag", "Makeline Section (Top)", 4.0, 0.5],
@@ -191,8 +128,7 @@ master_inventory = [
     [1257, "Three Cheese Blend", "Bag", "Makeline Section (Top)", 2.0, 0.5],
     [1210, "Jalapeno Peppers", "Bag", "Makeline Section (Top)", 8.0, 0.25],
     [1209, "Banana Peppers", "Bag", "Makeline Section (Top)", 8.0, 0.25],
-
-    # --- MAKELINE BOTTOM ---
+    # MAKELINE BOTTOM
     [1057, "20lb PIZZA CHEESE", "Each", "Makeline Section (Bottom)", 1.0, 1.0],
     [1218, "Alfredo Sauce", "Pouch", "Makeline Section (Bottom)", 3.0, 1.0],
     [1002, "Bulk Ranch Sauce", "Pouch", "Makeline Section (Bottom)", 8.0, 1.0],
@@ -211,8 +147,7 @@ master_inventory = [
     [1102, "Spicy Garlic Cups (INDIVIDUAL)", "Unit", "Makeline Section (Bottom)", 1.0, 1.0],
     [1213, "Cheese Sauce Cups (INDIVIDUAL)", "Unit", "Makeline Section (Bottom)", 1.0, 1.0],
     [1040, "Pepperoni (Lexan)", "Bag", "Makeline Section (Bottom)", 2.0, 0.25],
-
-    # --- CUT TABLE ---
+    # CUT TABLE
     [2146, "Sandwich Box (Individual)", "Each", "Cut Table Section", 1.0, 1.0],
     [2047, "CHICKEN BOX (Individual)", "Each", "Cut Table Section", 1.0, 1.0], 
     [2043, "Pizza Box 8 (Individual)", "Each", "Cut Table Section", 1.0, 1.0],
@@ -232,8 +167,7 @@ master_inventory = [
     [1148, "BBQ Bulk (Bottle)", "Bottle", "Cut Table Section", 8.0, 1.0],
     [1140, "Honey Chptl (Bottle)", "Bottle", "Cut Table Section", 10.0, 1.0],
     [1150, "Garlic Parm (Bottle)", "Bottle", "Cut Table Section", 12.0, 0.5],
-
-    # --- SODA & RACKS ---
+    # SODA & RACKS
     [6200, "2L Pepsi", "Each", "Soda back of store", 1.0, 0.0],
     [6202, "2L Pepsi Zero", "Each", "Soda back of store", 1.0, 0.0],
     [6661, "2L Starry", "Each", "Soda back of store", 1.0, 0.0],
@@ -273,125 +207,106 @@ master_inventory = [
     [2031, "Blaster Labels", "Roll", "Storage by office desk", 16.0, 0.0]
 ]
 
-df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
+df = pd.DataFrame(master_inventory, columns=['ID', 'Desc', 'Unit', 'Sec', 'CM', 'LM'])
 
-# --- 4. THE UI RENDER ENGINE ---
-def clean_input(label, key, step=1.0):
-    try:
-        val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
-        return val if val is not None else 0.0
-    except: return 0.0
+# --- 4. THE UI ENGINE ---
+def ci(l, k, s=1.0):
+    val = st.number_input(l, min_value=0.0, step=s, value=None, placeholder="", key=k)
+    return val if val is not None else 0.0
 
-st.title("Inventory Count Engine v2.9")
-st.caption("🚀 Accordion Logic Synced | Store 04185")
-
-progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
-st.markdown("<br>", unsafe_allow_html=True) 
-
+st.title("Juskvi Inventory Engine v3.0")
 inventory_totals = []
-sections = df['Section'].unique()
+sections = df['Sec'].unique()
 
-for section in sections:
-    section_data = df[df['Section'] == section]
-    if not section_data.empty:
-        # THE KEY IS THE SECRET: Changing the key forces the expander to reset (Collapse)
-        current_key = f"exp_{section}_{st.session_state.section_keys[section]}"
-        
-        with st.expander(f"📁 {section}", expanded=False):
-            # We use a nested container with the dynamic key to ensure reset
-            with st.container(key=current_key):
-                for index, row in section_data.iterrows():
-                    item_desc = f"{row['Item_Num']} - {row['Description']}"
-                    unit, case_mult, lexan_mult = row['Unit'], row['Case_Mult'], row['Lexan_Mult']
-                    
-                    with st.container(border=True):
-                        st.markdown(f"**{item_desc}**")
-                        
-                        if section == "Walk-in Section":
-                            if "Pepperoni" in row['Description']:
-                                total = clean_input("Cases", key=f"c_{index}_{section}", step=0.5) * case_mult
-                            elif "Anchovies" in row['Description']:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: cn = clean_input("Cans", key=f"i_{index}_{section}")
-                                total = cs + (cn / 25.0)
-                            elif "Bulk Ranch" in row['Description'] or "Alfredo" in row['Description']:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: ps = clean_input("Pouches", key=f"p_{index}_{section}")
-                                total = (cs * case_mult) + ps
-                            elif lexan_mult == 1.0:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: bs = clean_input("Loose Bags", key=f"b_{index}_{section}")
-                                total = (cs * case_mult) + bs
-                            elif "Crust" in row['Description'] and "Pan" not in row['Description']:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: sl = clean_input("Sleeves", key=f"s_{index}_{section}")
-                                total = cs + (sl * 0.25)
-                            elif "Cups" in row['Description'] and "Case" in row['Unit']:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: ind = clean_input("Units", key=f"i_{index}_{section}")
-                                total = cs + (ind / row['Case_Mult'])
-                            elif "Roll" in row['Description'] or "String" in row['Description']:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Case", key=f"c_{index}_{section}")
-                                with c2: lx = clean_input("Lexan", key=f"l_{index}_{section}", step=0.25)
-                                total = (cs * case_mult) + (lx * (lexan_mult if lexan_mult > 0 else 1.0))
-                            else:
-                                total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
-                        
-                        elif section == "Makeline Section (Top)":
-                            total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25) * lexan_mult
-                        
-                        elif section == "Makeline Section (Bottom)":
-                            if "Cup" in row['Description']: total = clean_input("Individual Count", key=f"i_{index}_{section}")
-                            elif "Bottle" in row['Description']: total = clean_input("Bottle Count", key=f"b_{index}_{section}", step=0.5) * lexan_mult
-                            elif "Pan Crust" in row['Description'] or "PIZZA CHEESE" in row['Description']: total = clean_input("Total Bags", key=f"tb_{index}_{section}")
-                            else: total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25) * lexan_mult
+for sec in sections:
+    # This button acts as the Folder Header
+    if st.button(f"📁 {sec}", key=f"hdr_{sec}", type="primary", use_container_width=True):
+        st.session_state.open_section = sec if st.session_state.open_section != sec else None
 
-                        elif section == "Cut Table Section":
-                            if any(x in row['Description'] for x in ["Box", "Tray", "Cup", "Sleeve"]): total = clean_input("Individual Units", key=f"i_{index}_{section}")
-                            elif "Bottle" in row['Description']: total = clean_input("Bottle Count", key=f"b_{index}_{section}", step=0.5) * lexan_mult
-                            elif "Pepperoncini" in row['Description']: total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25)
-                            else: total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
-                        
-                        elif section == "Soda back of store": total = clean_input("Bottle Each", key=f"s_{index}_{section}")
-                        elif section == "Dry Goods (Rack 1)":
-                            if lexan_mult > 0:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: bg = clean_input("Loose Bags/Pouches", key=f"b_{index}_{section}")
-                                total = (cs * case_mult) + bg
-                            else: total = clean_input("Cases", key=f"c_{index}_{section}") * case_mult
-                        else:
-                            if case_mult > 1:
-                                c1, c2 = st.columns(2)
-                                with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
-                                with c2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
-                                total = (cs * case_mult) + mid
-                            else: total = clean_input("Count", key=f"t_{index}_{section}")
-
-                        inventory_totals.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": round(total, 2)})
+    # This container ONLY appears if the section is open
+    if st.session_state.open_section == sec:
+        with st.container(border=True):
+            sec_data = df[df['Sec'] == sec]
+            for i, r in sec_data.iterrows():
+                st.markdown(f"**{r['ID']} - {r['Desc']}**")
                 
-                # THE FIX: This increments the key, forcing the accordion to reset to CLOSED
-                if st.button(f"✅ FINISH & COLLAPSE {section}", key=f"btn_reset_{section}", type="secondary", use_container_width=True):
-                    st.session_state.section_keys[section] += 1
-                    st.rerun()
+                # LOGIC BRANCHES
+                if sec == "Walk-in Section":
+                    if "Pepperoni" in r['Desc']: total = ci("Cases", f"c{i}", 0.5) * r['CM']
+                    elif "Anchov" in r['Desc']: 
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: cn = ci("Cans", f"n{i}")
+                        total = cs + (cn / 25.0)
+                    elif "Bulk Ranch" in r['Desc'] or "Alfredo" in r['Desc']:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: ph = ci("Pouches", f"p{i}")
+                        total = (cs * r['CM']) + ph
+                    elif r['LM'] == 1.0:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: bs = ci("Bags", f"b{i}")
+                        total = (cs * r['CM']) + bs
+                    elif "Crust" in r['Desc'] and "Pan" not in r['Desc']:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: sl = ci("Sleeves", f"s{i}")
+                        total = cs + (sl * 0.25)
+                    elif "Cups" in r['Desc']:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: id = ci("Individual", f"id{i}")
+                        total = cs + (id / r['CM'])
+                    elif "Roll" in r['Desc'] or "String" in r['Desc']:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Case", f"c{i}")
+                        with c2: lx = ci("Lexan", f"l{i}", 0.25)
+                        total = (cs * r['CM']) + (lx * (r['LM'] if r['LM'] > 0 else 1.0))
+                    else: total = ci(f"Total {r['Unit']}", f"t{i}")
+                
+                elif "Makeline Section (Top)" in sec:
+                    total = ci("Lexan Count", f"l{i}", 0.25) * r['LM']
+                
+                elif "Makeline Section (Bottom)" in sec or "Cut Table" in sec:
+                    lbl = "Individual" if any(x in r['Desc'] for x in ["Box", "Tray", "Cup", "Sleeve"]) else ("Bottle" if "Bottle" in r['Desc'] else "Lexan")
+                    v = ci(lbl, f"v{i}", 0.25 if lbl != "Individual" else 1.0)
+                    total = v * r['LM'] if lbl != "Individual" else v
+                
+                elif "Soda" in sec: total = ci("Bottle Count", f"s{i}")
+                
+                elif "Rack 1" in sec:
+                    if r['LM'] > 0:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: bg = ci("Pouches", f"b{i}")
+                        total = (cs * r['CM']) + bg
+                    else: total = ci("Total Cases", f"c{i}") * r['CM']
+                
+                else:
+                    if r['CM'] > 1:
+                        c1, c2 = st.columns(2)
+                        with c1: cs = ci("Cases", f"c{i}")
+                        with c2: md = ci("Loose Units", f"m{i}")
+                        total = (cs * r['CM']) + md
+                    else: total = ci("Total Count", f"t{i}")
 
-# --- 5. OUTPUT LAYER ---
+                inventory_totals.append({"Item #": r['ID'], "Description": r['Desc'], "Total": round(total, 2)})
+            
+            if st.button("✅ FINISH & COLLAPSE SECTION", key=f"cls_{sec}", type="secondary", use_container_width=True):
+                st.session_state.open_section = None
+                st.rerun()
+
+# --- 5. OUTPUT ---
 total_tasks = len(inventory_totals)
-completed_tasks = sum(1 for item in inventory_totals if item["Total Count"] > 0)
+completed_tasks = sum(1 for item in inventory_totals if item["Total"] > 0)
 if total_tasks > 0:
-    progress_bar.progress(completed_tasks / total_tasks, text=f"🔥 Inventory Completion: {int((completed_tasks/total_tasks)*100)}%")
+    st.progress(completed_tasks / total_tasks, text=f"🔥 Count Progress: {int((completed_tasks/total_tasks)*100)}%")
 
-st.divider()
-if st.button("GENERATE FINAL CORPORATE VALUES", type="primary"):
-    final_df = pd.DataFrame(inventory_totals).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
+if st.button("GENERATE FINAL CORPORATE VALUES", type="secondary", use_container_width=True):
+    final_df = pd.DataFrame(inventory_totals).groupby(['Item #', 'Description'], as_index=False)['Total'].sum()
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
-    st.success("Sorted by Item #. Ready for Corporate data entry.")
+    st.success("Sorted numerically for Corporate Upload.")
 
 components.html("""<script>
     const inputs = window.parent.document.querySelectorAll('input[type=number]');
