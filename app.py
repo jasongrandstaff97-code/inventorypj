@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
-st.set_page_config(page_title="Juskvi Inventory Engine v2.5", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Juskvi Inventory Engine v2.6", layout="centered", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -38,7 +38,7 @@ if not st.session_state['logged_in']:
             st.error("Access Denied: Invalid Credentials")
     st.stop()
 
-# --- 3. THE MASTER DATA DICTIONARY ---
+# --- 3. THE MASTER DATA DICTIONARY (COMPLETE v2.6 SYNC) ---
 master_inventory = [
     # --- WALK-IN SECTION ---
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
@@ -173,37 +173,50 @@ master_inventory = [
     [1140, "Honey Chptl (Bottle)", "Bottle", "Cut Table Section", 10.0, 1.0],
     [1150, "Garlic Parm (Bottle)", "Bottle", "Cut Table Section", 12.0, 0.5],
 
-    # --- SODA & COUNTER ---
-    [6000, "20oz Pepsi", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6003, "20oz Mountain Dew", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6660, "20oz Starry", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6006, "20oz Aquafina", "Each", "Front of Store Soda", 24.0, 0.0],
-    [6200, "2Ltr Pepsi", "Each", "Front of Store Soda", 8.0, 0.0],
-    [6203, "2Ltr Mountain Dew", "Each", "Front of Store Soda", 8.0, 0.0],
-    [1104, "Jug Garlic Sauce", "Bottle", "Customer Service Counter", 10.0, 0.0],
+    # --- SODA BACK OF STORE ---
+    [6200, "2L Pepsi", "Each", "Soda back of store", 1.0, 0.0],
+    [6202, "2L Pepsi Zero", "Each", "Soda back of store", 1.0, 0.0],
+    [6661, "2L Starry", "Each", "Soda back of store", 1.0, 0.0],
+    [6203, "2L Mountain Dew", "Each", "Soda back of store", 1.0, 0.0],
+    [6003, "20oz Mountain Dew", "Each", "Soda back of store", 1.0, 0.0],
+    [6000, "20oz Pepsi", "Each", "Soda back of store", 1.0, 0.0],
+    [6002, "20oz Pepsi Zero", "Each", "Soda back of store", 1.0, 0.0],
+    [6660, "20oz Starry", "Each", "Soda back of store", 1.0, 0.0],
+    [6006, "20oz Aquafina", "Each", "Soda back of store", 1.0, 0.0],
 
-    # --- DRY GOODS ---
-    [3007, "Cup 22oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
+    # --- DRY GOODS RACK 1 (BACKUPS) ---
+    [3007, "Cup 20oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
     [1135, "Buffalo Sauce (Pouch)", "Pouch", "Dry Goods (Rack 1)", 8.0, 1.0],
-    [1140, "Pouch Honey Chptl", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
-    [1150, "Garlic Parm Truffle Sc", "Pouch", "Dry Goods (Rack 1)", 12.0, 0.5],
-    [1148, "BBQ Bulk", "Bag", "Dry Goods (Rack 1)", 8.0, 1.0],
-    [1241, "Pepperoncini Peppers", "Bag", "Dry Goods (Rack 1)", 6.0, 1.0],
-    [1031, "Black Olives", "Pouch", "Dry Goods (Rack 1)", 6.0, 1.0],
-    [1209, "Banana Peppers", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
-    [1210, "Jalapeno Peppers", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
-    [1191, "IT Seasoning", "Bag", "Dry Goods (Rack 1)", 1.0, 0.0],
-    [1047, "PINEAPPLE - POUCH", "Pouch", "Dry Goods (Rack 1)", 6.0, 0.5],
-    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Dry Goods (Rack 2 - Pizza Sauce)", 6.0, 3.0], 
-    [1118, "BBQ Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
-    [1117, "Buffalo Sauce Cups", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
-    [2065, "Tray, Garlic Breadstick", "Each", "Dry Goods (Rack 3)", 150.0, 0.0],
+    [1140, "Honey Chipotle (Pouch)", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
+    [1150, "Garlic Parm Truffle (Pouch)", "Pouch", "Dry Goods (Rack 1)", 12.0, 0.5],
+    [1148, "BBQ Sauce (Bag)", "Bag", "Dry Goods (Rack 1)", 8.0, 1.0],
+    [1241, "Pepperoncinis (Case/Bag)", "Bag", "Dry Goods (Rack 1)", 6.0, 1.0],
+    [1031, "Black Olives (Pouch)", "Pouch", "Dry Goods (Rack 1)", 6.0, 1.0],
+    [1209, "Banana Peppers (Bag)", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
+    [1191, "Italian Seasoning (Bag)", "Bag", "Dry Goods (Rack 1)", 1.0, 0.0],
+    [1210, "Jalapeno Peppers (Bag)", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
+    [1047, "Pineapple Tidbits (Pouch)", "Pouch", "Dry Goods (Rack 1)", 6.0, 0.5],
+
+    # --- DRY GOODS RACK 2 (PIZZA SAUCE) ---
+    [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Dry Goods (Rack 2 - Pizza Sauce)", 6.0, 3.0],
+
+    # --- DRY GOODS RACK 3 (SMALLWARES) ---
+    [1118, "BBQ Sauce Cup", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [1117, "Buffalo Sauce Cup", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2065, "Breadstick Tray", "Each", "Dry Goods (Rack 3)", 150.0, 0.0],
     [2071, "Garlic Knot Tray", "Each", "Dry Goods (Rack 3)", 125.0, 0.0],
-    [2307, "Corrugated Pizza Sleeve", "Case", "Dry Goods (Rack 3)", 100.0, 0.0],
-    [2039, "Pop Up Foil", "Case", "Dry Goods (Rack 3)", 6.0, 0.0],
-    [3012, "SOUFFLE CUP, HINGED LID", "Case", "Dry Goods (Rack 3)", 40.0, 0.0],
-    [2047, "CHICKEN BOX", "Each", "Dry Goods (Rack 3)", 240.0, 0.0],
-    [3065, "Logo Napkins (Sleeve)", "Case", "Dry Goods (Rack 3)", 32.0, 0.0],
+    [2307, "Pizza Inserts (12/12)", "Case", "Dry Goods (Rack 3)", 100.0, 0.0],
+    [3050, "Bleached GVP Bag", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3055, "Liner Bags (9 / 1.5x1.5)", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3042, "Baking Sheets (10/10)", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3040, "Baking Sheets (14/14)", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2039, "Handy Foil (500 sheets)", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3060, "Paper Plates", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [3012, "Souffle Cups (2oz)", "Case", "Dry Goods (Rack 3)", 40.0, 0.0],
+    [2305, "Forks", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
+    [2047, "Wing Clamshell (240/cs)", "Each", "Dry Goods (Rack 3)", 240.0, 0.0],
+    [3065, "Papa John Logo Napkins", "Case", "Dry Goods (Rack 3)", 32.0, 0.0],
+    
     [2031, "Blaster Labels", "Roll", "Storage by office desk", 16.0, 0.0]
 ]
 
@@ -217,8 +230,8 @@ def clean_input(label, key, step=1.0):
     except Exception:
         return 0.0
 
-st.title("Inventory Count Engine v2.5")
-st.caption("🚀 Optimized Architecture | Store 04185")
+st.title("Inventory Count Engine v2.6")
+st.caption("🚀 Fully Synced Store Logic | Store 04185")
 
 progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
 st.markdown("<br>", unsafe_allow_html=True) 
@@ -226,8 +239,8 @@ st.markdown("<br>", unsafe_allow_html=True)
 inventory_totals = []
 sections = [
     "Walk-in Section", "Prep Rack", "Makeline Section (Top)", "Makeline Section (Bottom)",
-    "Cut Table Section", "Front of Store Soda", "Customer Service Counter", 
-    "Dry Goods (Rack 1)", "Dry Goods (Rack 2 - Pizza Sauce)", "Dry Goods (Rack 3)", "Storage by office desk"
+    "Cut Table Section", "Soda back of store", "Dry Goods (Rack 1)", 
+    "Dry Goods (Rack 2 - Pizza Sauce)", "Dry Goods (Rack 3)", "Storage by office desk"
 ]
 
 for section in sections:
@@ -243,75 +256,55 @@ for section in sections:
                 with st.container(border=True):
                     st.markdown(f"**{item_desc}**")
                     
-                    # 1. WALK-IN LOGIC (Refined for Pepperoni)
+                    # 1. WALK-IN LOGIC (Pepperoni/Anchovy/Ranch rules)
                     if section == "Walk-in Section":
-                        # Pepperoni (Cases only - allows 0.5 for bags)
                         if "Pepperoni" in row['Description']:
                             cases = clean_input("Cases", key=f"c_{index}_{section}", step=0.5)
                             total = cases * case_mult
-
                         elif "Anchovies" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: cans = clean_input("Individual Cans", key=f"i_{index}_{section}")
                             total = cases + (cans / 25.0)
-
                         elif "Bulk Ranch" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: pouches = clean_input("Pouches", key=f"p_{index}_{section}")
                             total = (cases * case_mult) + pouches
-
                         elif lexan_mult == 1.0 and "Ranch Sauce" not in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: bags = clean_input("Loose Bags/Pouches", key=f"b_{index}_{section}")
                             total = (cases * case_mult) + bags
-                        
                         elif "Crust" in row['Description'] and "Pan" not in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: sleeves = clean_input("Sleeves", key=f"s_{index}_{section}")
                             total = cases + (sleeves * 0.25)
-
-                        elif "Pan Pizza" in row['Description']:
+                        elif "Pan Pizza" in row['Description'] or "Alfredo" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: bags = clean_input("Loose Bags", key=f"b_{index}_{section}")
-                            total = (cases * case_mult) + bags
-
-                        elif "Alfredo" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: pouches = clean_input("Pouches", key=f"p_{index}_{section}")
-                            total = (cases * case_mult) + pouches
-
+                            with col2: loose = clean_input("Loose Bags/Pouches", key=f"l_{index}_{section}")
+                            total = (cases * case_mult) + loose
                         elif "Cups" in row['Description'] and "Case" in row['Unit']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
                             with col2: inds = clean_input("Individual Units", key=f"i_{index}_{section}")
                             total = cases + (inds / row['Case_Mult']) if row['Case_Mult'] > 1 else cases + inds
-
                         elif "Sandwich Roll" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Case", key=f"c_{index}_{section}")
                             with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}")
                             total = (cases * case_mult) + lexans
-
                         elif "STRING CHEESE" in row['Description']:
                             col1, col2 = st.columns(2)
                             with col1: cases = clean_input("Case", key=f"c_{index}_{section}")
                             with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}", step=0.25)
                             total = (cases * case_mult) + (lexans * lexan_mult)
-
                         elif "Jug Garlic" in row['Description']:
-                            jugs = clean_input("Jugs", key=f"j_{index}_{section}")
-                            total = jugs
-
+                            total = clean_input("Jugs", key=f"j_{index}_{section}")
                         elif lexan_mult == 0.0 and case_mult > 1.0:
-                            cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            total = cases * case_mult
-
+                            total = clean_input("Cases", key=f"c_{index}_{section}") * case_mult
                         else:
                             total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
@@ -335,7 +328,7 @@ for section in sections:
 
                     # 4. CUT TABLE: Individual & Bottle
                     elif section == "Cut Table Section":
-                        if "Box" in row['Description'] or "Tray" in row['Description'] or "Cup" in row['Description'] or "Sleeve" in row['Description']:
+                        if any(x in row['Description'] for x in ["Box", "Tray", "Cup", "Sleeve"]):
                             label, step_val, is_unit = "Individual Count", 1.0, True
                         elif "Bottle" in row['Description']:
                             label, step_val, is_unit = "Bottle Count", 0.5, False
@@ -346,22 +339,28 @@ for section in sections:
                         count_val = clean_input(label, key=f"ct_{index}_{section}", step=step_val)
                         total = count_val if is_unit else (count_val * lexan_mult)
 
-                    # 5. REMAINING STANDARD LOGIC
-                    elif lexan_mult > 0 and section not in ["Walk-in Section", "Makeline Section (Top)", "Makeline Section (Bottom)", "Cut Table Section"]:
-                        col1, col2, col3 = st.columns(3)
-                        with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                        with col2: mid = clean_input(f"{unit}s", key=f"m_{index}_{section}")
-                        with col3: lexans = clean_input("Lexans", key=f"l_{index}_{section}", step=0.25)
-                        total = (cases * case_mult) + mid + (lexans * lexan_mult)
+                    # 5. SODA & RACK 1: Dual/Single Logic Sync
+                    elif section == "Soda back of store":
+                        total = clean_input("Bottle Count (Each)", key=f"s_{index}_{section}")
                     
-                    elif case_mult > 1:
-                        col1, col2 = st.columns(2)
-                        with col1: cases = clean_input("Bulk", key=f"c_{index}_{section}")
-                        with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
-                        total = (cases * case_mult) + mid
-                    
+                    elif section == "Dry Goods (Rack 1)":
+                        if lexan_mult > 0:
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
+                            with col2: loose = clean_input("Bags/Pouches", key=f"b_{index}_{section}")
+                            total = (cases * case_mult) + loose
+                        else:
+                            total = clean_input("Total Cases", key=f"c_{index}_{section}") * case_mult
+
+                    # 6. RACK 3 & OTHERS (Standard Logic)
                     else:
-                        total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
+                        if case_mult > 1:
+                            col1, col2 = st.columns(2)
+                            with col1: cases = clean_input("Bulk/Case", key=f"c_{index}_{section}")
+                            with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
+                            total = (cases * case_mult) + mid
+                        else:
+                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
 
                     inventory_totals.append({
                         "Item #": row['Item_Num'],
