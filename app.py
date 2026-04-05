@@ -3,7 +3,11 @@ import pandas as pd
 import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
-st.set_page_config(page_title="Juskvi Inventory Engine v2.6", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="Juskvi Inventory Engine v2.7", 
+    layout="centered", 
+    initial_sidebar_state="collapsed"
+)
 
 st.markdown("""
     <style>
@@ -16,18 +20,35 @@ st.markdown("""
     div[data-testid="stExpander"] summary p {color: white !important; font-size: 1.1rem !important; font-weight: 600 !important; margin-bottom: 0px !important;}
     .stButton>button {background-color: #DF1934 !important; color: white !important; border-radius: 8px; border: none; font-weight: bold; font-size: 1.2rem !important; padding: 15px !important; width: 100%; box-shadow: 0px 4px 10px rgba(223, 25, 52, 0.3); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;}
     .stButton>button:hover {background-color: #9c0c20 !important; box-shadow: 0px 6px 15px rgba(223, 25, 52, 0.5);}
+    .stElementContainer [data-testid="baseButton-secondary"] {background-color: #6c757d !important; color: white !important; height: 45px !important; font-size: 1rem !important; text-transform: uppercase;}
     input[type="number"] {text-align: center !important; font-size: 1.3rem !important; font-weight: bold !important;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SECURITY AUTHENTICATION ---
+# --- 2. SECURITY & SECTION PERSISTENCE ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
+
+sections = [
+    "Walk-in Section", 
+    "Prep Rack", 
+    "Makeline Section (Top)", 
+    "Makeline Section (Bottom)",
+    "Cut Table Section", 
+    "Soda back of store", 
+    "Dry Goods (Rack 1)", 
+    "Dry Goods (Rack 2 - Pizza Sauce)", 
+    "Dry Goods (Rack 3)", 
+    "Storage by office desk"
+]
+
+for sec in sections:
+    if f"exp_{sec}" not in st.session_state:
+        st.session_state[f"exp_{sec}"] = False
 
 if not st.session_state['logged_in']:
     st.title("Papa John's Inventory System")
     st.caption("Store 04185 | Authorized Personnel Only")
-    st.divider()
     username = st.text_input("User ID")
     password = st.text_input("Password", type="password")
     if st.button("Secure Login"):
@@ -38,7 +59,7 @@ if not st.session_state['logged_in']:
             st.error("Access Denied: Invalid Credentials")
     st.stop()
 
-# --- 3. THE MASTER DATA DICTIONARY (COMPLETE v2.6 SYNC) ---
+# --- 3. THE MASTER DATA DICTIONARY (VERBOSE) ---
 master_inventory = [
     # --- WALK-IN SECTION ---
     [1085, "Crust, Parbaked Pan Pizza", "Bag", "Walk-in Section", 4.0, 0.0],
@@ -173,7 +194,7 @@ master_inventory = [
     [1140, "Honey Chptl (Bottle)", "Bottle", "Cut Table Section", 10.0, 1.0],
     [1150, "Garlic Parm (Bottle)", "Bottle", "Cut Table Section", 12.0, 0.5],
 
-    # --- SODA BACK OF STORE ---
+    # --- SODA ---
     [6200, "2L Pepsi", "Each", "Soda back of store", 1.0, 0.0],
     [6202, "2L Pepsi Zero", "Each", "Soda back of store", 1.0, 0.0],
     [6661, "2L Starry", "Each", "Soda back of store", 1.0, 0.0],
@@ -184,7 +205,7 @@ master_inventory = [
     [6660, "20oz Starry", "Each", "Soda back of store", 1.0, 0.0],
     [6006, "20oz Aquafina", "Each", "Soda back of store", 1.0, 0.0],
 
-    # --- DRY GOODS RACK 1 (BACKUPS) ---
+    # --- RACKS ---
     [3007, "Cup 20oz Cold", "Case", "Dry Goods (Rack 1)", 20.0, 0.0],
     [1135, "Buffalo Sauce (Pouch)", "Pouch", "Dry Goods (Rack 1)", 8.0, 1.0],
     [1140, "Honey Chipotle (Pouch)", "Pouch", "Dry Goods (Rack 1)", 10.0, 1.0],
@@ -196,11 +217,7 @@ master_inventory = [
     [1191, "Italian Seasoning (Bag)", "Bag", "Dry Goods (Rack 1)", 1.0, 0.0],
     [1210, "Jalapeno Peppers (Bag)", "Bag", "Dry Goods (Rack 1)", 8.0, 0.25],
     [1047, "Pineapple Tidbits (Pouch)", "Pouch", "Dry Goods (Rack 1)", 6.0, 0.5],
-
-    # --- DRY GOODS RACK 2 (PIZZA SAUCE) ---
     [1005, "PIZZA SAUCE(POUCH)", "Pouch", "Dry Goods (Rack 2 - Pizza Sauce)", 6.0, 3.0],
-
-    # --- DRY GOODS RACK 3 (SMALLWARES) ---
     [1118, "BBQ Sauce Cup", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [1117, "Buffalo Sauce Cup", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [2065, "Breadstick Tray", "Each", "Dry Goods (Rack 3)", 150.0, 0.0],
@@ -216,7 +233,6 @@ master_inventory = [
     [2305, "Forks", "Case", "Dry Goods (Rack 3)", 1.0, 0.0],
     [2047, "Wing Clamshell (240/cs)", "Each", "Dry Goods (Rack 3)", 240.0, 0.0],
     [3065, "Papa John Logo Napkins", "Case", "Dry Goods (Rack 3)", 32.0, 0.0],
-    
     [2031, "Blaster Labels", "Roll", "Storage by office desk", 16.0, 0.0]
 ]
 
@@ -230,156 +246,122 @@ def clean_input(label, key, step=1.0):
     except Exception:
         return 0.0
 
-st.title("Inventory Count Engine v2.6")
-st.caption("🚀 Fully Synced Store Logic | Store 04185")
+st.title("Inventory Count Engine v2.7")
+st.caption("🚀 Deep Verbosity | Store 04185")
 
 progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
 st.markdown("<br>", unsafe_allow_html=True) 
 
 inventory_totals = []
-sections = [
-    "Walk-in Section", "Prep Rack", "Makeline Section (Top)", "Makeline Section (Bottom)",
-    "Cut Table Section", "Soda back of store", "Dry Goods (Rack 1)", 
-    "Dry Goods (Rack 2 - Pizza Sauce)", "Dry Goods (Rack 3)", "Storage by office desk"
-]
 
 for section in sections:
     section_data = df[df['Section'] == section]
     if not section_data.empty:
-        with st.expander(f"📁 {section}", expanded=False):
+        with st.expander(f"📁 {section}", expanded=st.session_state[f"exp_{section}"]):
             for index, row in section_data.iterrows():
                 item_desc = f"{row['Item_Num']} - {row['Description']}"
-                unit = row['Unit']
-                case_mult = row['Case_Mult']
-                lexan_mult = row['Lexan_Mult']
+                unit, case_mult, lexan_mult = row['Unit'], row['Case_Mult'], row['Lexan_Mult']
                 
                 with st.container(border=True):
                     st.markdown(f"**{item_desc}**")
                     
-                    # 1. WALK-IN LOGIC (Pepperoni/Anchovy/Ranch rules)
                     if section == "Walk-in Section":
                         if "Pepperoni" in row['Description']:
-                            cases = clean_input("Cases", key=f"c_{index}_{section}", step=0.5)
-                            total = cases * case_mult
+                            total = clean_input("Cases", key=f"c_{index}_{section}", step=0.5) * case_mult
                         elif "Anchovies" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: cans = clean_input("Individual Cans", key=f"i_{index}_{section}")
-                            total = cases + (cans / 25.0)
-                        elif "Bulk Ranch" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: pouches = clean_input("Pouches", key=f"p_{index}_{section}")
-                            total = (cases * case_mult) + pouches
-                        elif lexan_mult == 1.0 and "Ranch Sauce" not in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: bags = clean_input("Loose Bags/Pouches", key=f"b_{index}_{section}")
-                            total = (cases * case_mult) + bags
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: cn = clean_input("Cans", key=f"i_{index}_{section}")
+                            total = cs + (cn / 25.0)
+                        elif "Bulk Ranch" in row['Description'] or "Alfredo" in row['Description']:
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: ps = clean_input("Pouches", key=f"p_{index}_{section}")
+                            total = (cs * case_mult) + ps
+                        elif lexan_mult == 1.0:
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: bs = clean_input("Loose Bags", key=f"b_{index}_{section}")
+                            total = (cs * case_mult) + bs
                         elif "Crust" in row['Description'] and "Pan" not in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: sleeves = clean_input("Sleeves", key=f"s_{index}_{section}")
-                            total = cases + (sleeves * 0.25)
-                        elif "Pan Pizza" in row['Description'] or "Alfredo" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: loose = clean_input("Loose Bags/Pouches", key=f"l_{index}_{section}")
-                            total = (cases * case_mult) + loose
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: sl = clean_input("Sleeves", key=f"s_{index}_{section}")
+                            total = cs + (sl * 0.25)
                         elif "Cups" in row['Description'] and "Case" in row['Unit']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: inds = clean_input("Individual Units", key=f"i_{index}_{section}")
-                            total = cases + (inds / row['Case_Mult']) if row['Case_Mult'] > 1 else cases + inds
-                        elif "Sandwich Roll" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Case", key=f"c_{index}_{section}")
-                            with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}")
-                            total = (cases * case_mult) + lexans
-                        elif "STRING CHEESE" in row['Description']:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Case", key=f"c_{index}_{section}")
-                            with col2: lexans = clean_input("Lexans", key=f"l_{index}_{section}", step=0.25)
-                            total = (cases * case_mult) + (lexans * lexan_mult)
-                        elif "Jug Garlic" in row['Description']:
-                            total = clean_input("Jugs", key=f"j_{index}_{section}")
-                        elif lexan_mult == 0.0 and case_mult > 1.0:
-                            total = clean_input("Cases", key=f"c_{index}_{section}") * case_mult
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: ind = clean_input("Units", key=f"i_{index}_{section}")
+                            total = cs + (ind / row['Case_Mult'])
+                        elif "Roll" in row['Description'] or "String" in row['Description']:
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Case", key=f"c_{index}_{section}")
+                            with c2: lx = clean_input("Lexan", key=f"l_{index}_{section}", step=0.25)
+                            total = (cs * case_mult) + (lx * (lexan_mult if lexan_mult > 0 else 1.0))
                         else:
-                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
-
-                    # 2. MAKELINE TOP: Lexan Only
+                            total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
+                    
                     elif section == "Makeline Section (Top)":
-                        lexans = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25)
-                        total = lexans * lexan_mult
-
-                    # 3. MAKELINE BOTTOM: Single Tab
+                        total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25) * lexan_mult
+                    
                     elif section == "Makeline Section (Bottom)":
                         if "Cup" in row['Description']:
-                            label, step_val, is_unit = "Individual Unit Count", 1.0, True
+                            total = clean_input("Individual Count", key=f"i_{index}_{section}")
                         elif "Bottle" in row['Description']:
-                            label, step_val, is_unit = "Total Bottles", 0.5, False
+                            total = clean_input("Bottle Count", key=f"b_{index}_{section}", step=0.5) * lexan_mult
                         elif "Pan Crust" in row['Description'] or "PIZZA CHEESE" in row['Description']:
-                            label, step_val, is_unit = "Total Bags (Each)", 1.0, True
+                            total = clean_input("Total Bags", key=f"tb_{index}_{section}")
                         else:
-                            label, step_val, is_unit = "Lexan Count", 0.25, False
-                        count_val = clean_input(label, key=f"b_{index}_{section}", step=step_val)
-                        total = count_val if is_unit else (count_val * lexan_mult)
+                            total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25) * lexan_mult
 
-                    # 4. CUT TABLE: Individual & Bottle
                     elif section == "Cut Table Section":
                         if any(x in row['Description'] for x in ["Box", "Tray", "Cup", "Sleeve"]):
-                            label, step_val, is_unit = "Individual Count", 1.0, True
+                            total = clean_input("Individual Units", key=f"i_{index}_{section}")
                         elif "Bottle" in row['Description']:
-                            label, step_val, is_unit = "Bottle Count", 0.5, False
-                        elif "Pepperoncini" in row['Description']:
-                            label, step_val, is_unit = "Lexan Count", 0.25, False
+                            total = clean_input("Bottle Count", key=f"b_{index}_{section}", step=0.5) * lexan_mult
+                        elif "Pepperoncinis" in row['Description']:
+                            total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25)
                         else:
-                            label, step_val, is_unit = f"Total ({row['Unit']})", 1.0, True
-                        count_val = clean_input(label, key=f"ct_{index}_{section}", step=step_val)
-                        total = count_val if is_unit else (count_val * lexan_mult)
-
-                    # 5. SODA & RACK 1: Dual/Single Logic Sync
-                    elif section == "Soda back of store":
-                        total = clean_input("Bottle Count (Each)", key=f"s_{index}_{section}")
+                            total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
                     
+                    elif section == "Soda back of store":
+                        total = clean_input("Bottle Each", key=f"s_{index}_{section}")
+
                     elif section == "Dry Goods (Rack 1)":
                         if lexan_mult > 0:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Cases", key=f"c_{index}_{section}")
-                            with col2: loose = clean_input("Bags/Pouches", key=f"b_{index}_{section}")
-                            total = (cases * case_mult) + loose
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: bg = clean_input("Loose Bags/Pouches", key=f"b_{index}_{section}")
+                            total = (cs * case_mult) + bg
                         else:
-                            total = clean_input("Total Cases", key=f"c_{index}_{section}") * case_mult
+                            total = clean_input("Cases", key=f"c_{index}_{section}") * case_mult
 
-                    # 6. RACK 3 & OTHERS (Standard Logic)
                     else:
                         if case_mult > 1:
-                            col1, col2 = st.columns(2)
-                            with col1: cases = clean_input("Bulk/Case", key=f"c_{index}_{section}")
-                            with col2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
-                            total = (cases * case_mult) + mid
+                            c1, c2 = st.columns(2)
+                            with c1: cs = clean_input("Cases", key=f"c_{index}_{section}")
+                            with c2: mid = clean_input(f"Loose {unit}s", key=f"m_{index}_{section}")
+                            total = (cs * case_mult) + mid
                         else:
-                            total = clean_input(f"Total Count ({unit})", key=f"t_{index}_{section}")
+                            total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
 
-                    inventory_totals.append({
-                        "Item #": row['Item_Num'],
-                        "Description": row['Description'],
-                        "Total Count": round(total, 2)
-                    })
+                    inventory_totals.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": round(total, 2)})
+            
+            if st.button(f"⬇️ COLLAPSE {section}", key=f"close_{section}", use_container_width=True, type="secondary"):
+                st.session_state[f"exp_{section}"] = False
+                st.rerun()
 
-# --- OUTPUT LAYER ---
+# --- 5. OUTPUT LAYER ---
 total_tasks = len(inventory_totals)
 completed_tasks = sum(1 for item in inventory_totals if item["Total Count"] > 0)
 if total_tasks > 0:
     progress_bar.progress(completed_tasks / total_tasks, text=f"🔥 Inventory Completion: {int((completed_tasks/total_tasks)*100)}%")
 
-st.markdown("---")
-if st.button("Generate Final Count Values", type="primary"):
-    final_df = pd.DataFrame(inventory_totals)
-    consolidated_df = final_df.groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
-    st.dataframe(consolidated_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
-    st.success("Sorted by Item # for Corporate Upload.")
+st.divider()
+if st.button("GENERATE FINAL CORPORATE VALUES", type="primary"):
+    final_df = pd.DataFrame(inventory_totals).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
+    st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
+    st.success("Perfectly sorted by Item #. Ready for Corporate data entry.")
 
 components.html("""<script>
     const inputs = window.parent.document.querySelectorAll('input[type=number]');
