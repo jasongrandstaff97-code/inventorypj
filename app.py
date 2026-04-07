@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Inventory Engine v3.4", 
+    page_title="Juskvi Inventory Engine v3.5", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
@@ -16,17 +16,14 @@ st.markdown("""
     header {visibility: hidden;}
     h1, h2, h3 {color: #00583E !important; font-family: 'Helvetica Neue', sans-serif;}
     
-    /* Expander Styling */
+    /* Expander Styling - Colors removed to adapt to Light/Dark Mode automatically */
     div[data-testid="stExpander"] {
         border: 2px solid #00583E !important; 
         border-radius: 12px; 
         margin-bottom: 15px; 
-        background-color: #f9f9f9;
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
     }
     div[data-testid="stExpander"] summary {
         background-color: #00583E !important; 
-        color: white !important; 
         border-radius: 10px; 
         padding: 15px !important;
     }
@@ -36,14 +33,11 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* Input Box Focus */
+    /* Input Box Focus - Stripped hardcoded colors so they remain highly visible */
     input[type="number"] {
         text-align: center !important; 
         font-size: 1.4rem !important; 
         font-weight: bold !important; 
-        color: #00583E !important;
-        border: 2px solid #eee !important;
-        border-radius: 8px !important;
     }
 
     /* Primary Action Button (Red) */
@@ -306,7 +300,7 @@ def clean_input(label, key, step=1.0):
     except: return 0.0
 
 st.title("Inventory Count Engine v3.4")
-st.caption("🚀 Navigation Flow & Collapse Active | Store 04185")
+st.caption("🚀 Fully Ordered Flow & Accordion Logic | Store 04185")
 
 progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
 st.markdown("<br>", unsafe_allow_html=True) 
@@ -316,7 +310,7 @@ inventory_totals = []
 for section in ordered_sections:
     section_data = df[df['Section'] == section]
     if not section_data.empty:
-        # Dynamic key assigns a new ID when collapsed, resetting the expander
+        # Assigning the dynamic key to the Expander forces it to close on rerun
         folder_key = f"exp_{section}_{st.session_state.folder_versions[section]}"
         
         with st.expander(f"📁 {section}", expanded=False, key=folder_key):
