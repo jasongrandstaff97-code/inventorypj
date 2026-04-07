@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
+import json
+import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Inventory Engine v3.5", 
+    page_title="Juskvi Engine v4.0", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
@@ -16,7 +18,6 @@ st.markdown("""
     header {visibility: hidden;}
     h1, h2, h3 {color: #00583E !important; font-family: 'Helvetica Neue', sans-serif;}
     
-    /* Expander Styling - Colors removed to adapt to Light/Dark Mode automatically */
     div[data-testid="stExpander"] {
         border: 2px solid #00583E !important; 
         border-radius: 12px; 
@@ -33,14 +34,12 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* Input Box Focus - Stripped hardcoded colors so they remain highly visible */
     input[type="number"] {
         text-align: center !important; 
         font-size: 1.4rem !important; 
         font-weight: bold !important; 
     }
 
-    /* Primary Action Button (Red) */
     .stButton>button {
         background-color: #DF1934 !important; 
         color: white !important; 
@@ -54,7 +53,6 @@ st.markdown("""
         letter-spacing: 1px;
     }
     
-    /* Collapse Button Logic (Gray) */
     div.stButton > button[kind="secondary"] {
         background-color: #6c757d !important;
         color: white !important;
@@ -65,7 +63,29 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SECURITY & STATE MANAGEMENT ---
+# --- 2. MULTIPLAYER DATABASE LOGIC ---
+DB_FILE = 'live_inventory.json'
+
+def load_db():
+    if not os.path.exists(DB_FILE):
+        with open(DB_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
+
+def save_db(data):
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f)
+
+if 'db' not in st.session_state:
+    st.session_state.db = load_db()
+
+def update_val(key):
+    # Triggers on every keystroke to save globally
+    st.session_state.db[key] = st.session_state[key]
+    save_db(st.session_state.db)
+
+# --- 3. SECURITY & STATE MANAGEMENT ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
@@ -75,7 +95,6 @@ ordered_sections = [
     "Makeline Section (Bottom)", "Dough Station", "Front of store soda", "Storage by office desk"
 ]
 
-# Track folder versions to force-collapse them
 if 'folder_versions' not in st.session_state:
     st.session_state['folder_versions'] = {sec: 0 for sec in ordered_sections}
 
@@ -93,7 +112,7 @@ if not st.session_state['logged_in']:
             st.error("Access Denied: Invalid Credentials")
     st.stop()
 
-# --- 3. THE MASTER DATA DICTIONARY ---
+# --- 4. THE MASTER DATA DICTIONARY ---
 master_inventory = [
     # 1. SODA BACK OF STORE
     [6200, "2L Pepsi", "Each", "Soda back of store", 1.0, 0.0],
@@ -198,36 +217,37 @@ master_inventory = [
     [1152, "Sauce, Pizza Ranch", "Bag", "Walk-in Section", 12.0, 1.0],
     [1040, "Pepperoni", "Bag", "Walk-in Section", 2.0, 1.0],
 
-    # 8. PREP RACK
-    [1002, "Ranch", "Pouch", "Prep Rack", 8.0, 1.0],
-    [1218, "Alfredo", "Pouch", "Prep Rack", 3.0, 1.0],
-    [1148, "BBQ Sauce", "Bag", "Prep Rack", 8.0, 1.0],
-    [1052, "Spinach", "Bag", "Prep Rack", 4.0, 1.0],
-    [1051, "Mushrooms", "Pail", "Prep Rack", 2.0, 0.5],
-    [1066, "Italian Sausage", "Bag", "Prep Rack", 4.0, 0.5],
-    [1065, "Sausage", "Bag", "Prep Rack", 4.0, 0.5],
-    [1064, "Beef", "Bag", "Prep Rack", 2.0, 0.5],
-    [1178, "Philly Steak", "Bag", "Prep Rack", 4.0, 0.5],
-    [1167, "Canadian Bacon", "Bag", "Prep Rack", 2.0, 1.0],
-    [1049, "Bacon", "Bag", "Prep Rack", 4.0, 1.0],
-    [1241, "Pepperoncini", "Bag", "Prep Rack", 6.0, 1.0],
-    [1031, "Black Olives", "Pouch", "Prep Rack", 6.0, 1.0],
-    [1047, "Pineapple", "Pouch", "Prep Rack", 6.0, 0.5],
-    [1095, "Chicken", "Bag", "Prep Rack", 2.0, 0.5],
-    [1159, "2 Cheese", "Bag", "Prep Rack", 2.0, 0.33],
-    [1019, "Tomato", "Tray", "Prep Rack", 2.0, 0.5],
-    [1016, "Green Pepper", "Bag", "Prep Rack", 4.0, 0.5],
-    [1017, "Onion", "Bag", "Prep Rack", 4.0, 0.5],
-    [1209, "Banana Pepper", "Bag", "Prep Rack", 8.0, 0.25],
-    [1210, "Jalapeno", "Bag", "Prep Rack", 8.0, 0.25],
-    [1150, "Garlic Parm", "Pouch", "Prep Rack", 12.0, 0.5],
-    [1135, "Buffalo Sauce", "Pouch", "Prep Rack", 8.0, 1.0],
-    [1140, "Honey Chipotle", "Pouch", "Prep Rack", 10.0, 1.0],
-    [1104, "Garlic Sauce Jug", "Bottle", "Prep Rack", 10.0, 1.0],
-    [1152, "Pizza Ranch", "Bag", "Prep Rack", 12.0, 0.5],
-    [1092, "Roasted Wings", "Bag", "Prep Rack", 4.0, 1.0],
-    [1093, "Boneless Wings", "Bag", "Prep Rack", 2.0, 1.0],
-    [1040, "Pepperoni", "Bag", "Prep Rack", 2.0, 0.25],
+    # 8. PREP RACK (UPDATED TO PURE LEXAN/BOTTLE)
+    [1002, "Ranch (Lexan)", "Lexan", "Prep Rack", 8.0, 1.0],
+    [1218, "Alfredo (Lexan)", "Lexan", "Prep Rack", 3.0, 1.0],
+    [1148, "BBQ Sauce (Lexan)", "Lexan", "Prep Rack", 8.0, 1.0],
+    [1052, "Spinach (Lexan)", "Lexan", "Prep Rack", 4.0, 1.0],
+    [1051, "Mushrooms (Lexan)", "Lexan", "Prep Rack", 2.0, 0.5],
+    [1066, "Italian Sausage (Lexan)", "Lexan", "Prep Rack", 4.0, 0.5],
+    [1065, "Sausage (Lexan)", "Lexan", "Prep Rack", 4.0, 0.5],
+    [1064, "Beef (Lexan)", "Lexan", "Prep Rack", 2.0, 0.5],
+    [1178, "Philly Steak (Lexan)", "Lexan", "Prep Rack", 4.0, 0.5],
+    [1167, "Canadian Bacon (Lexan)", "Lexan", "Prep Rack", 2.0, 1.0],
+    [1049, "Bacon (Lexan)", "Lexan", "Prep Rack", 4.0, 1.0],
+    [1241, "Pepperoncini (Lexan)", "Lexan", "Prep Rack", 6.0, 1.0],
+    [1031, "Black Olives (Lexan)", "Lexan", "Prep Rack", 6.0, 1.0],
+    [1047, "Pineapple (Lexan)", "Lexan", "Prep Rack", 6.0, 0.5],
+    [1095, "Chicken (Lexan)", "Lexan", "Prep Rack", 2.0, 0.5],
+    [1159, "2 Cheese (Lexan)", "Lexan", "Prep Rack", 2.0, 0.33],
+    [1257, "Three Cheese (Lexan)", "Lexan", "Prep Rack", 2.0, 0.5],
+    [1019, "Tomato (Lexan)", "Lexan", "Prep Rack", 2.0, 0.5],
+    [1016, "Green Pepper (Lexan)", "Lexan", "Prep Rack", 4.0, 0.5],
+    [1017, "Onion (Lexan)", "Lexan", "Prep Rack", 4.0, 0.5],
+    [1209, "Banana Pepper (Lexan)", "Lexan", "Prep Rack", 8.0, 0.25],
+    [1210, "Jalapeno (Lexan)", "Lexan", "Prep Rack", 8.0, 0.25],
+    [1150, "Garlic Parm (Bottle)", "Bottle", "Prep Rack", 12.0, 0.5],
+    [1135, "Buffalo Sauce (Bottle)", "Bottle", "Prep Rack", 8.0, 1.0],
+    [1140, "Honey Chipotle (Bottle)", "Bottle", "Prep Rack", 10.0, 1.0],
+    [1104, "Garlic Sauce Jug (Bottle)", "Bottle", "Prep Rack", 10.0, 1.0],
+    [1152, "Pizza Ranch (Bottle)", "Bottle", "Prep Rack", 12.0, 0.5],
+    [1092, "Roasted Wings (Lexan)", "Lexan", "Prep Rack", 4.0, 1.0],
+    [1093, "Boneless Wings (Lexan)", "Lexan", "Prep Rack", 2.0, 1.0],
+    [1040, "Pepperoni (Lexan)", "Lexan", "Prep Rack", 2.0, 0.25],
 
     # 9. MAKELINE TOP
     [1331, "String Cheese", "Bag", "Makeline Section (Top)", 1.0, 0.25],
@@ -275,6 +295,11 @@ master_inventory = [
     [1075, "Dough Tray 10", "Tray", "Dough Station", 1.0, 0.0],
     [1076, "DOUGH M, 12 INCH", "Tray", "Dough Station", 1.0, 0.0],
     [1080, "Dough Tray 14", "Tray", "Dough Station", 1.0, 0.0],
+    [1082, "Dustinator", "Lexan", "Dough Station", 1.0, 1.0],
+    [1148, "Barbecue Sauce (Lexan)", "Bag", "Dough Station", 8.0, 1.0],
+    [1005, "Pizza Sauce (Pouch)", "Pouch", "Dough Station", 6.0, 3.0],
+    [1104, "Garlic Sauce Jug", "Bottle", "Dough Station", 10.0, 0.0],
+    [1150, "Garlic Parmesean (Bottle)", "Bottle", "Dough Station", 12.0, 0.5],
 
     # 12. FRONT OF STORE SODA
     [6000, "20oz Pepsi", "Unit", "Front of store soda", 1.0, 1.0],
@@ -292,15 +317,15 @@ master_inventory = [
 
 df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 'Section', 'Case_Mult', 'Lexan_Mult'])
 
-# --- 4. THE UI RENDER ENGINE ---
+# --- 5. THE UI RENDER ENGINE (DATABASE ENABLED) ---
 def clean_input(label, key, step=1.0):
-    try:
-        val = st.number_input(label, min_value=0.0, step=step, value=None, placeholder="", key=key)
-        return val if val is not None else 0.0
-    except: return 0.0
+    # Reads from DB initially. Triggers update_val on change.
+    existing_val = st.session_state.db.get(key, None)
+    val = st.number_input(label, min_value=0.0, step=step, value=existing_val, key=key, on_change=update_val, args=(key,))
+    return val if val is not None else 0.0
 
-st.title("Inventory Count Engine v3.4")
-st.caption("🚀 Fully Ordered Flow & Accordion Logic | Store 04185")
+st.title("Inventory Count Engine v4.0")
+st.caption("🚀 MULTIPLAYER ACTIVE | Live Sync Enabled")
 
 progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
 st.markdown("<br>", unsafe_allow_html=True) 
@@ -310,7 +335,6 @@ inventory_totals = []
 for section in ordered_sections:
     section_data = df[df['Section'] == section]
     if not section_data.empty:
-        # Assigning the dynamic key to the Expander forces it to close on rerun
         folder_key = f"exp_{section}_{st.session_state.folder_versions[section]}"
         
         with st.expander(f"📁 {section}", expanded=False, key=folder_key):
@@ -357,6 +381,11 @@ for section in ordered_sections:
                         else:
                             total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
                     
+                    elif section == "Prep Rack":
+                        lbl = "Bottle Count" if "Bottle" in row['Description'] else "Lexan Count"
+                        step_val = 0.5 if "Bottle" in row['Description'] else 0.25
+                        total = clean_input(lbl, key=f"pr_{index}_{section}", step=step_val) * lexan_mult
+
                     elif section == "Makeline Section (Top)":
                         total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25) * lexan_mult
                     
@@ -372,7 +401,21 @@ for section in ordered_sections:
                         elif "Pepperoncini" in row['Description']: total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25)
                         else: total = clean_input(f"Total {unit}", key=f"t_{index}_{section}")
                     
-                    elif "soda" in section.lower() or "Dough Station" in section:
+                    elif section == "Dough Station":
+                        if "Tray" in row['Description']: 
+                            total = clean_input("Total Trays", key=f"t_{index}_{section}")
+                        elif "Dustinator" in row['Description'] or "Lexan" in row['Description']: 
+                            total = clean_input("Lexan Count", key=f"l_{index}_{section}", step=0.25) * (lexan_mult if lexan_mult > 0 else 1.0)
+                        elif "Pouch" in row['Description']: 
+                            total = clean_input("Pouches", key=f"p_{index}_{section}")
+                        elif "Jug" in row['Description']: 
+                            total = clean_input("Jugs", key=f"j_{index}_{section}")
+                        elif "Bottle" in row['Description']: 
+                            total = clean_input("Bottle Count", key=f"b_{index}_{section}", step=0.5) * lexan_mult
+                        else: 
+                            total = clean_input(f"Total {unit}", key=f"tot_{index}_{section}")
+
+                    elif "soda" in section.lower():
                         total = clean_input(f"Individual {unit}", key=f"s_{index}_{section}")
 
                     elif section == "Dry Goods (Rack 1)":
@@ -393,12 +436,11 @@ for section in ordered_sections:
 
                     inventory_totals.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": round(total, 2)})
             
-            # --- THE COLLAPSE BUTTON ---
             if st.button(f"✅ FINISH & COLLAPSE {section}", key=f"btn_close_{section}", type="secondary", use_container_width=True):
                 st.session_state.folder_versions[section] += 1
                 st.rerun()
 
-# --- 5. OUTPUT LAYER ---
+# --- 6. OUTPUT & RESET LAYER ---
 total_tasks = len(inventory_totals)
 completed_tasks = sum(1 for item in inventory_totals if item["Total Count"] > 0)
 if total_tasks > 0:
@@ -409,6 +451,12 @@ if st.button("GENERATE FINAL CORPORATE VALUES", type="primary"):
     final_df = pd.DataFrame(inventory_totals).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
     st.success("Sorted by Item #. Ready for Corporate data entry.")
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+if st.button("🚨 WIPE DATA FOR NEW SHIFT", type="secondary"):
+    save_db({})
+    st.session_state.db = {}
+    st.rerun()
 
 components.html("""<script>
     const inputs = window.parent.document.querySelectorAll('input[type=number]');
