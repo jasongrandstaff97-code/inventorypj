@@ -6,13 +6,15 @@ import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Engine v4.9.2", 
+    page_title="Juskvi Engine v5.0", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
 
 # Hidden button that our JavaScript will "click" when you pull-to-refresh
-if st.button("PTR_TRIGGER", key="ptr_hidden_btn"):
+# Placed first so we can target it exactly with CSS
+st.button("PTR_TRIGGER", key="ptr_hidden_btn")
+if st.session_state.get('ptr_hidden_btn'):
     st.rerun()
 
 st.markdown("""
@@ -22,9 +24,12 @@ st.markdown("""
     header {visibility: hidden;}
     h1, h2, h3 {color: #00583E !important; font-family: 'Helvetica Neue', sans-serif;}
     
-    /* HIDES THE INVISIBLE PULL-TO-REFRESH BUTTON */
-    div[data-testid="stButton"] button:contains('PTR_TRIGGER') {
+    /* 100% BULLETPROOF WAY TO HIDE THE TRIGGER BUTTON */
+    div[data-testid="stButton"]:first-of-type {
         display: none !important;
+        height: 0px !important;
+        margin: 0px !important;
+        padding: 0px !important;
     }
     
     div[data-testid="stExpander"] {
@@ -453,8 +458,8 @@ def render_inventory_item(index, row, section, is_search=False):
 
     return total
 
-st.title("Inventory Engine v4.9.2")
-st.caption("🚀 LIVE SYNC | VISUAL COMPLETION TRACKING")
+st.title("Inventory Engine v5.0")
+st.caption("🚀 NATIVE PULL-TO-REFRESH ENABLED | Store 04185")
 
 # --- 6. THE PRONOUNCED PROGRESS BAR ---
 def is_item_completed(index, section):
@@ -517,7 +522,6 @@ for section in ordered_sections:
         folder_key = f"exp_{section}_{st.session_state.folder_versions[section]}"
         icon = section_icons.get(section, "📁")
         
-        # Check if this section has been marked as completed
         is_completed = section in st.session_state['completed_sections']
         status_stamp = " ✅" if is_completed else ""
         
@@ -527,7 +531,6 @@ for section in ordered_sections:
                 final_output.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": total})
             
             if st.button(f"✅ FINISH & COLLAPSE", key=f"btn_close_{section}", type="secondary", use_container_width=True):
-                # Mark section as complete and snap the folder shut
                 st.session_state['completed_sections'].add(section)
                 st.session_state.folder_versions[section] += 1
                 st.rerun()
@@ -553,7 +556,7 @@ with col_wipe:
     if st.button("🚨 WIPE DATA FOR NEW SHIFT", type="secondary"):
         save_db({})
         st.session_state.db = {}
-        st.session_state['completed_sections'] = set() # Wipe the checkmarks too!
+        st.session_state['completed_sections'] = set() 
         st.session_state['generate_pressed'] = False
         st.rerun()
 
@@ -562,7 +565,7 @@ if st.session_state.get('generate_pressed', False):
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
     st.success("Sorted by Item #. Ready for Corporate data entry.")
 
-# --- 10. JAVASCRIPT INJECTION (Pull-to-Refresh with Pizza Spin) ---
+# --- 10. JAVASCRIPT INJECTION (Native Pull-to-Refresh Override) ---
 components.html("""
 <script>
     const parentDoc = window.parent.document;
@@ -578,6 +581,14 @@ components.html("""
         `;
         parentDoc.head.appendChild(style);
     }
+    
+    // JS redundancy to hide the trigger button just in case
+    const allBtns = parentDoc.querySelectorAll('button');
+    allBtns.forEach(b => {
+        if(b.innerText.includes('PTR_TRIGGER')) {
+            b.style.display = 'none';
+        }
+    });
 
     const inputs = parentDoc.querySelectorAll('input[type=number]');
     inputs.forEach(input => { 
@@ -588,42 +599,46 @@ components.html("""
     if (!parentDoc.getElementById('ptr-wrapper')) {
         const ptr = parentDoc.createElement('div');
         ptr.id = 'ptr-wrapper';
-        ptr.innerHTML = '<div id="ptr-icon" style="font-size: 28px;">🍕</div>';
-        ptr.style.cssText = 'position:fixed; top:-60px; left:50%; transform:translateX(-50%); z-index:99999; background:white; border-radius:50%; width:55px; height:55px; display:flex; justify-content:center; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.2); transition: top 0.2s ease-out;';
+        ptr.innerHTML = '<div id="ptr-icon" style="font-size: 32px; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.2));">🍕</div>';
+        ptr.style.cssText = 'position:fixed; top:-80px; left:50%; transform:translateX(-50%); z-index:999999; background:white; border-radius:50%; width:60px; height:60px; display:flex; justify-content:center; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition: top 0.2s ease-out;';
         parentDoc.body.appendChild(ptr);
 
         let startY = 0;
-        let currentY = 0;
         let isPulling = false;
 
+        // passive: false allows us to override the browser's native refresh
         parentDoc.addEventListener('touchstart', (e) => {
             if (parentDoc.documentElement.scrollTop <= 5 && parentDoc.body.scrollTop <= 5) {
                 startY = e.touches[0].clientY;
                 isPulling = true;
                 ptr.style.transition = 'none';
             }
-        }, {passive: true});
+        }, {passive: false});
 
         parentDoc.addEventListener('touchmove', (e) => {
             if (!isPulling) return;
-            currentY = e.touches[0].clientY;
+            let currentY = e.touches[0].clientY;
             let deltaY = currentY - startY;
-            if (deltaY > 0) {
-                let move = Math.min(deltaY * 0.4, 80);
+            
+            // IF PULLING DOWN AT THE TOP OF THE PAGE -> BLOCK BROWSER NATIVE REFRESH
+            if (deltaY > 0 && (parentDoc.documentElement.scrollTop <= 5)) {
+                e.preventDefault(); 
+                let move = Math.min(deltaY * 0.4, 90);
                 ptr.style.top = (move - 60) + 'px';
                 parentDoc.getElementById('ptr-icon').style.transform = `rotate(${deltaY * 2}deg)`;
             }
-        }, {passive: true});
+        }, {passive: false});
 
-        parentDoc.addEventListener('touchend', () => {
+        parentDoc.addEventListener('touchend', (e) => {
             if (!isPulling) return;
             isPulling = false;
+            let currentY = e.changedTouches[0].clientY;
             let deltaY = currentY - startY;
             
             if (deltaY > 120) { 
-                ptr.style.top = '25px'; 
+                ptr.style.top = '30px'; 
                 ptr.style.transition = 'top 0.2s';
-                parentDoc.getElementById('ptr-icon').style.animation = 'pizza-spin 0.6s linear infinite';
+                parentDoc.getElementById('ptr-icon').style.animation = 'pizza-spin 0.5s linear infinite';
                 
                 const btns = parentDoc.querySelectorAll('button');
                 for (let b of btns) {
@@ -634,17 +649,15 @@ components.html("""
                 }
                 
                 setTimeout(() => {
-                    ptr.style.top = '-60px';
+                    ptr.style.top = '-80px';
                     setTimeout(() => {
                         parentDoc.getElementById('ptr-icon').style.animation = 'none';
                     }, 300);
                 }, 1500);
             } else {
                 ptr.style.transition = 'top 0.3s ease-out';
-                ptr.style.top = '-60px';
+                ptr.style.top = '-80px';
             }
-            startY = 0;
-            currentY = 0;
         });
     }
 </script>
