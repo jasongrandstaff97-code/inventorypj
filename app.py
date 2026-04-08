@@ -6,7 +6,7 @@ import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Engine v4.5", 
+    page_title="Juskvi Engine v4.7", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
@@ -40,25 +40,28 @@ st.markdown("""
         font-weight: bold !important; 
     }
 
+    /* Primary Action Button (Red) */
     .stButton>button {
         background-color: #DF1934 !important; 
         color: white !important; 
         border-radius: 10px; 
         font-weight: bold; 
         font-size: 1.1rem !important; 
-        padding: 15px !important; 
+        padding: 10px !important; 
         width: 100%; 
         border: none;
         text-transform: uppercase;
         letter-spacing: 1px;
+        height: 60px !important; 
     }
     
+    /* Secondary/Collapse/Wipe Button Logic (Gray) */
     div.stButton > button[kind="secondary"] {
         background-color: #6c757d !important;
         color: white !important;
         border: none !important;
-        height: 50px !important;
-        margin-top: 15px;
+        height: 60px !important; 
+        margin-top: 0px !important; 
     }
     </style>
 """, unsafe_allow_html=True)
@@ -439,8 +442,8 @@ def render_inventory_item(index, row, section, is_search=False):
 
     return total
 
-st.title("Inventory Engine v4.5")
-st.caption("🚀 LIVE SYNC | DEDUPLICATED SEARCH | Store 04185")
+st.title("Inventory Engine v4.7")
+st.caption("🚀 LIVE SYNC | STORE 04185")
 
 # --- 6. THE PRONOUNCED PROGRESS BAR ---
 def is_item_completed(index, section):
@@ -475,20 +478,16 @@ with st.expander("🔍 QUICK SEARCH (Log Stray Items)", expanded=False):
     search_query = st.text_input("Find an item out of place (e.g., 'Pep', 'Cheese', 'Box')", key="search_bar")
     if search_query:
         st.markdown("### 🎯 Stray Item Logging")
-        # Drop duplicates so we only get ONE unified input block per item
         unique_matches = df[df['Description'].str.contains(search_query, case=False, na=False)].drop_duplicates(subset=['Item_Num'])
         
         if not unique_matches.empty:
             for _, row in unique_matches.iterrows():
                 item_num = row['Item_Num']
-                # Clean up the description so it just says "Pepperoni" instead of "Pepperoni (Lexan)"
                 base_desc = row['Description'].split("(")[0].strip()
                 unit, case_mult, lexan_mult = row['Unit'], row['Case_Mult'], row['Lexan_Mult']
                 
                 with st.container(border=True):
                     st.markdown(f"**{item_num} - {base_desc}** *(Stray Count)*")
-                    
-                    # Unified Input Array
                     cols = st.columns(2) if lexan_mult == 0 else st.columns(3)
                     with cols[0]:
                         stray_u = clean_input(f"Stray {unit}s", f"stray_u_{item_num}", is_search=True)
@@ -517,7 +516,6 @@ for section in ordered_sections:
                 st.rerun()
 
 # --- 9. OUTPUT & RESET LAYER ---
-# Aggregate Stray Items silently into the final output dataframe
 unique_items = df.drop_duplicates(subset=['Item_Num'])
 for _, row in unique_items.iterrows():
     item_num = row['Item_Num']
@@ -529,16 +527,25 @@ for _, row in unique_items.iterrows():
         final_output.append({"Item #": item_num, "Description": row['Description'], "Total Count": stray_total})
 
 st.divider()
-if st.button("GENERATE FINAL CORPORATE VALUES", type="primary"):
+
+# Side-by-side action buttons
+col_gen, col_wipe = st.columns(2)
+
+with col_gen:
+    if st.button("Generate final count values", type="primary"):
+        st.session_state['generate_pressed'] = True
+with col_wipe:
+    if st.button("🚨 WIPE DATA FOR NEW SHIFT", type="secondary"):
+        save_db({})
+        st.session_state.db = {}
+        st.session_state['generate_pressed'] = False
+        st.rerun()
+
+# Render DataFrame outside the columns so it stretches full width
+if st.session_state.get('generate_pressed', False):
     final_df = pd.DataFrame(final_output).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
     st.success("Sorted by Item #. Ready for Corporate data entry.")
-
-st.markdown("<br><br>", unsafe_allow_html=True)
-if st.button("🚨 WIPE DATA FOR NEW SHIFT", type="secondary"):
-    save_db({})
-    st.session_state.db = {}
-    st.rerun()
 
 components.html("""<script>
     const inputs = window.parent.document.querySelectorAll('input[type=number]');
