@@ -6,16 +6,10 @@ import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Engine v5.0", 
+    page_title="Juskvi Engine v5.1", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
-
-# Hidden button that our JavaScript will "click" when you pull-to-refresh
-# Placed first so we can target it exactly with CSS
-st.button("PTR_TRIGGER", key="ptr_hidden_btn")
-if st.session_state.get('ptr_hidden_btn'):
-    st.rerun()
 
 st.markdown("""
     <style>
@@ -23,14 +17,6 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     h1, h2, h3 {color: #00583E !important; font-family: 'Helvetica Neue', sans-serif;}
-    
-    /* 100% BULLETPROOF WAY TO HIDE THE TRIGGER BUTTON */
-    div[data-testid="stButton"]:first-of-type {
-        display: none !important;
-        height: 0px !important;
-        margin: 0px !important;
-        padding: 0px !important;
-    }
     
     div[data-testid="stExpander"] {
         border: 2px solid #00583E !important; 
@@ -74,6 +60,11 @@ st.markdown("""
         border: none !important;
         height: 60px !important; 
         margin-top: 0px !important; 
+    }
+
+    /* Hide the specific container that holds our invisible trigger */
+    #hidden-trigger-container {
+        display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -458,8 +449,8 @@ def render_inventory_item(index, row, section, is_search=False):
 
     return total
 
-st.title("Inventory Engine v5.0")
-st.caption("🚀 NATIVE PULL-TO-REFRESH ENABLED | Store 04185")
+st.title("Inventory Engine v5.1")
+st.caption("🚀 NATIVE PULL-TO-REFRESH FIXED | Store 04185")
 
 # --- 6. THE PRONOUNCED PROGRESS BAR ---
 def is_item_completed(index, section):
@@ -565,7 +556,13 @@ if st.session_state.get('generate_pressed', False):
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
     st.success("Sorted by Item #. Ready for Corporate data entry.")
 
-# --- 10. JAVASCRIPT INJECTION (Native Pull-to-Refresh Override) ---
+# --- 10. INVISIBLE TRIGGER PLACEMENT & JS INJECTION ---
+# Place the trigger inside a hidden div at the bottom so it doesn't break the layout
+st.markdown('<div id="hidden-trigger-container">', unsafe_allow_html=True)
+if st.button("PTR_TRIGGER", key="ptr_hidden_btn_bottom"):
+    st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+
 components.html("""
 <script>
     const parentDoc = window.parent.document;
@@ -582,14 +579,6 @@ components.html("""
         parentDoc.head.appendChild(style);
     }
     
-    // JS redundancy to hide the trigger button just in case
-    const allBtns = parentDoc.querySelectorAll('button');
-    allBtns.forEach(b => {
-        if(b.innerText.includes('PTR_TRIGGER')) {
-            b.style.display = 'none';
-        }
-    });
-
     const inputs = parentDoc.querySelectorAll('input[type=number]');
     inputs.forEach(input => { 
         input.setAttribute('inputmode', 'decimal'); 
@@ -606,7 +595,6 @@ components.html("""
         let startY = 0;
         let isPulling = false;
 
-        // passive: false allows us to override the browser's native refresh
         parentDoc.addEventListener('touchstart', (e) => {
             if (parentDoc.documentElement.scrollTop <= 5 && parentDoc.body.scrollTop <= 5) {
                 startY = e.touches[0].clientY;
@@ -620,7 +608,6 @@ components.html("""
             let currentY = e.touches[0].clientY;
             let deltaY = currentY - startY;
             
-            // IF PULLING DOWN AT THE TOP OF THE PAGE -> BLOCK BROWSER NATIVE REFRESH
             if (deltaY > 0 && (parentDoc.documentElement.scrollTop <= 5)) {
                 e.preventDefault(); 
                 let move = Math.min(deltaY * 0.4, 90);
