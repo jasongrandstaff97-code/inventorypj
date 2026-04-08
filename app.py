@@ -6,7 +6,7 @@ import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Engine v4.9", 
+    page_title="Juskvi Engine v4.9.2", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
@@ -21,6 +21,11 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     h1, h2, h3 {color: #00583E !important; font-family: 'Helvetica Neue', sans-serif;}
+    
+    /* HIDES THE INVISIBLE PULL-TO-REFRESH BUTTON */
+    div[data-testid="stButton"] button:contains('PTR_TRIGGER') {
+        display: none !important;
+    }
     
     div[data-testid="stExpander"] {
         border: 2px solid #00583E !important; 
@@ -85,9 +90,13 @@ def save_db(data):
 if 'db' not in st.session_state:
     st.session_state.db = load_db()
 
-# --- 3. SECURITY, STATE & ICON MAPPING ---
+# --- 3. SECURITY & STATE MANAGEMENT ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
+
+# Track which sections have been explicitly marked as finished
+if 'completed_sections' not in st.session_state:
+    st.session_state['completed_sections'] = set()
 
 ordered_sections = [
     "Soda back of store", "Dry Goods (Rack 1)", "Dry Goods (Rack 2)", "Dry Goods (Rack 3)",
@@ -444,8 +453,8 @@ def render_inventory_item(index, row, section, is_search=False):
 
     return total
 
-st.title("Inventory Engine v4.9")
-st.caption("🚀 PIZZA SYNC | PULL-TO-REFRESH | Store 04185")
+st.title("Inventory Engine v4.9.2")
+st.caption("🚀 LIVE SYNC | VISUAL COMPLETION TRACKING")
 
 # --- 6. THE PRONOUNCED PROGRESS BAR ---
 def is_item_completed(index, section):
@@ -508,12 +517,18 @@ for section in ordered_sections:
         folder_key = f"exp_{section}_{st.session_state.folder_versions[section]}"
         icon = section_icons.get(section, "📁")
         
-        with st.expander(f"{icon} {section}", expanded=False, key=folder_key):
+        # Check if this section has been marked as completed
+        is_completed = section in st.session_state['completed_sections']
+        status_stamp = " ✅" if is_completed else ""
+        
+        with st.expander(f"{icon} {section}{status_stamp}", expanded=False, key=folder_key):
             for index, row in section_data.iterrows():
                 total = render_inventory_item(index, row, section, is_search=False)
                 final_output.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": total})
             
             if st.button(f"✅ FINISH & COLLAPSE", key=f"btn_close_{section}", type="secondary", use_container_width=True):
+                # Mark section as complete and snap the folder shut
+                st.session_state['completed_sections'].add(section)
                 st.session_state.folder_versions[section] += 1
                 st.rerun()
 
@@ -538,6 +553,7 @@ with col_wipe:
     if st.button("🚨 WIPE DATA FOR NEW SHIFT", type="secondary"):
         save_db({})
         st.session_state.db = {}
+        st.session_state['completed_sections'] = set() # Wipe the checkmarks too!
         st.session_state['generate_pressed'] = False
         st.rerun()
 
@@ -551,7 +567,6 @@ components.html("""
 <script>
     const parentDoc = window.parent.document;
     
-    // Inject the spinning animation keyframes into the parent document
     if (!parentDoc.getElementById('pizza-spin-style')) {
         const style = parentDoc.createElement('style');
         style.id = 'pizza-spin-style';
@@ -564,18 +579,15 @@ components.html("""
         parentDoc.head.appendChild(style);
     }
 
-    // Force mobile numeric keyboards
     const inputs = parentDoc.querySelectorAll('input[type=number]');
     inputs.forEach(input => { 
         input.setAttribute('inputmode', 'decimal'); 
         input.setAttribute('pattern', '[0-9]*'); 
     });
 
-    // Custom Pull-to-Refresh Logic
     if (!parentDoc.getElementById('ptr-wrapper')) {
         const ptr = parentDoc.createElement('div');
         ptr.id = 'ptr-wrapper';
-        // Using the requested Pizza slice!
         ptr.innerHTML = '<div id="ptr-icon" style="font-size: 28px;">🍕</div>';
         ptr.style.cssText = 'position:fixed; top:-60px; left:50%; transform:translateX(-50%); z-index:99999; background:white; border-radius:50%; width:55px; height:55px; display:flex; justify-content:center; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.2); transition: top 0.2s ease-out;';
         parentDoc.body.appendChild(ptr);
@@ -585,7 +597,6 @@ components.html("""
         let isPulling = false;
 
         parentDoc.addEventListener('touchstart', (e) => {
-            // Only trigger if user is at the absolute top of the screen
             if (parentDoc.documentElement.scrollTop <= 5 && parentDoc.body.scrollTop <= 5) {
                 startY = e.touches[0].clientY;
                 isPulling = true;
@@ -598,10 +609,8 @@ components.html("""
             currentY = e.touches[0].clientY;
             let deltaY = currentY - startY;
             if (deltaY > 0) {
-                // Add resistance so it feels like a native app
                 let move = Math.min(deltaY * 0.4, 80);
                 ptr.style.top = (move - 60) + 'px';
-                // Rotate based on how far you pull it down
                 parentDoc.getElementById('ptr-icon').style.transform = `rotate(${deltaY * 2}deg)`;
             }
         }, {passive: true});
@@ -611,13 +620,11 @@ components.html("""
             isPulling = false;
             let deltaY = currentY - startY;
             
-            // If pulled down far enough, trigger the refresh and the infinite spin
             if (deltaY > 120) { 
                 ptr.style.top = '25px'; 
                 ptr.style.transition = 'top 0.2s';
                 parentDoc.getElementById('ptr-icon').style.animation = 'pizza-spin 0.6s linear infinite';
                 
-                // Find and click the hidden Streamlit button
                 const btns = parentDoc.querySelectorAll('button');
                 for (let b of btns) {
                     if (b.innerText.includes('PTR_TRIGGER')) {
@@ -626,7 +633,6 @@ components.html("""
                     }
                 }
                 
-                // Hide the spinner after a short delay
                 setTimeout(() => {
                     ptr.style.top = '-60px';
                     setTimeout(() => {
@@ -634,7 +640,6 @@ components.html("""
                     }, 300);
                 }, 1500);
             } else {
-                // Snap back if they didn't pull far enough
                 ptr.style.transition = 'top 0.3s ease-out';
                 ptr.style.top = '-60px';
             }
