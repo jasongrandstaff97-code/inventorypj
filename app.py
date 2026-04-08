@@ -6,10 +6,14 @@ import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Engine v4.7", 
+    page_title="Juskvi Engine v4.9", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
+
+# Hidden button that our JavaScript will "click" when you pull-to-refresh
+if st.button("PTR_TRIGGER", key="ptr_hidden_btn"):
+    st.rerun()
 
 st.markdown("""
     <style>
@@ -40,7 +44,6 @@ st.markdown("""
         font-weight: bold !important; 
     }
 
-    /* Primary Action Button (Red) */
     .stButton>button {
         background-color: #DF1934 !important; 
         color: white !important; 
@@ -55,7 +58,6 @@ st.markdown("""
         height: 60px !important; 
     }
     
-    /* Secondary/Collapse/Wipe Button Logic (Gray) */
     div.stButton > button[kind="secondary"] {
         background-color: #6c757d !important;
         color: white !important;
@@ -442,8 +444,8 @@ def render_inventory_item(index, row, section, is_search=False):
 
     return total
 
-st.title("Inventory Engine v4.7")
-st.caption("🚀 LIVE SYNC | STORE 04185")
+st.title("Inventory Engine v4.9")
+st.caption("🚀 PIZZA SYNC | PULL-TO-REFRESH | Store 04185")
 
 # --- 6. THE PRONOUNCED PROGRESS BAR ---
 def is_item_completed(index, section):
@@ -528,11 +530,9 @@ for _, row in unique_items.iterrows():
 
 st.divider()
 
-# Side-by-side action buttons
 col_gen, col_wipe = st.columns(2)
-
 with col_gen:
-    if st.button("Generate final count values", type="primary"):
+    if st.button("GENERATE FINAL COUNT VALUES", type="primary"):
         st.session_state['generate_pressed'] = True
 with col_wipe:
     if st.button("🚨 WIPE DATA FOR NEW SHIFT", type="secondary"):
@@ -541,13 +541,106 @@ with col_wipe:
         st.session_state['generate_pressed'] = False
         st.rerun()
 
-# Render DataFrame outside the columns so it stretches full width
 if st.session_state.get('generate_pressed', False):
     final_df = pd.DataFrame(final_output).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
     st.success("Sorted by Item #. Ready for Corporate data entry.")
 
-components.html("""<script>
-    const inputs = window.parent.document.querySelectorAll('input[type=number]');
-    inputs.forEach(input => { input.setAttribute('inputmode', 'decimal'); input.setAttribute('pattern', '[0-9]*'); });
-    </script>""", height=0, width=0)
+# --- 10. JAVASCRIPT INJECTION (Pull-to-Refresh with Pizza Spin) ---
+components.html("""
+<script>
+    const parentDoc = window.parent.document;
+    
+    // Inject the spinning animation keyframes into the parent document
+    if (!parentDoc.getElementById('pizza-spin-style')) {
+        const style = parentDoc.createElement('style');
+        style.id = 'pizza-spin-style';
+        style.innerHTML = `
+            @keyframes pizza-spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        parentDoc.head.appendChild(style);
+    }
+
+    // Force mobile numeric keyboards
+    const inputs = parentDoc.querySelectorAll('input[type=number]');
+    inputs.forEach(input => { 
+        input.setAttribute('inputmode', 'decimal'); 
+        input.setAttribute('pattern', '[0-9]*'); 
+    });
+
+    // Custom Pull-to-Refresh Logic
+    if (!parentDoc.getElementById('ptr-wrapper')) {
+        const ptr = parentDoc.createElement('div');
+        ptr.id = 'ptr-wrapper';
+        // Using the requested Pizza slice!
+        ptr.innerHTML = '<div id="ptr-icon" style="font-size: 28px;">🍕</div>';
+        ptr.style.cssText = 'position:fixed; top:-60px; left:50%; transform:translateX(-50%); z-index:99999; background:white; border-radius:50%; width:55px; height:55px; display:flex; justify-content:center; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.2); transition: top 0.2s ease-out;';
+        parentDoc.body.appendChild(ptr);
+
+        let startY = 0;
+        let currentY = 0;
+        let isPulling = false;
+
+        parentDoc.addEventListener('touchstart', (e) => {
+            // Only trigger if user is at the absolute top of the screen
+            if (parentDoc.documentElement.scrollTop <= 5 && parentDoc.body.scrollTop <= 5) {
+                startY = e.touches[0].clientY;
+                isPulling = true;
+                ptr.style.transition = 'none';
+            }
+        }, {passive: true});
+
+        parentDoc.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            currentY = e.touches[0].clientY;
+            let deltaY = currentY - startY;
+            if (deltaY > 0) {
+                // Add resistance so it feels like a native app
+                let move = Math.min(deltaY * 0.4, 80);
+                ptr.style.top = (move - 60) + 'px';
+                // Rotate based on how far you pull it down
+                parentDoc.getElementById('ptr-icon').style.transform = `rotate(${deltaY * 2}deg)`;
+            }
+        }, {passive: true});
+
+        parentDoc.addEventListener('touchend', () => {
+            if (!isPulling) return;
+            isPulling = false;
+            let deltaY = currentY - startY;
+            
+            // If pulled down far enough, trigger the refresh and the infinite spin
+            if (deltaY > 120) { 
+                ptr.style.top = '25px'; 
+                ptr.style.transition = 'top 0.2s';
+                parentDoc.getElementById('ptr-icon').style.animation = 'pizza-spin 0.6s linear infinite';
+                
+                // Find and click the hidden Streamlit button
+                const btns = parentDoc.querySelectorAll('button');
+                for (let b of btns) {
+                    if (b.innerText.includes('PTR_TRIGGER')) {
+                        b.click();
+                        break;
+                    }
+                }
+                
+                // Hide the spinner after a short delay
+                setTimeout(() => {
+                    ptr.style.top = '-60px';
+                    setTimeout(() => {
+                        parentDoc.getElementById('ptr-icon').style.animation = 'none';
+                    }, 300);
+                }, 1500);
+            } else {
+                // Snap back if they didn't pull far enough
+                ptr.style.transition = 'top 0.3s ease-out';
+                ptr.style.top = '-60px';
+            }
+            startY = 0;
+            currentY = 0;
+        });
+    }
+</script>
+""", height=0, width=0)
