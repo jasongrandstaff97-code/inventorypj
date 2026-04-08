@@ -6,7 +6,7 @@ import os
 
 # --- 1. PAGE SETUP & BRANDING ---
 st.set_page_config(
-    page_title="Juskvi Engine v4.1", 
+    page_title="Juskvi Engine v4.5", 
     layout="centered", 
     initial_sidebar_state="collapsed"
 )
@@ -30,7 +30,7 @@ st.markdown("""
     }
     div[data-testid="stExpander"] summary p {
         color: white !important;
-        font-size: 1.2rem !important; 
+        font-size: 1.25rem !important; 
         font-weight: bold !important;
     }
     
@@ -80,7 +80,7 @@ def save_db(data):
 if 'db' not in st.session_state:
     st.session_state.db = load_db()
 
-# --- 3. SECURITY & STATE MANAGEMENT ---
+# --- 3. SECURITY, STATE & ICON MAPPING ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
@@ -89,6 +89,22 @@ ordered_sections = [
     "Boxes", "Cut Table Section", "Walk-in Section", "Prep Rack", "Makeline Section (Top)", 
     "Makeline Section (Bottom)", "Dough Station", "Front of store soda", "Storage by office desk"
 ]
+
+section_icons = {
+    "Soda back of store": "🥤",
+    "Dry Goods (Rack 1)": "🌶️",
+    "Dry Goods (Rack 2)": "🍅",
+    "Dry Goods (Rack 3)": "🥡",
+    "Boxes": "📦",
+    "Cut Table Section": "🔪",
+    "Walk-in Section": "❄️",
+    "Prep Rack": "🥓",
+    "Makeline Section (Top)": "🧀",
+    "Makeline Section (Bottom)": "🗄️",
+    "Dough Station": "🥖",
+    "Front of store soda": "🧊",
+    "Storage by office desk": "🏷️"
+}
 
 if 'folder_versions' not in st.session_state:
     st.session_state['folder_versions'] = {sec: 0 for sec in ordered_sections}
@@ -314,8 +330,6 @@ df = pd.DataFrame(master_inventory, columns=['Item_Num', 'Description', 'Unit', 
 
 # --- 5. THE UI RENDER ENGINE & SEARCH LOGIC ---
 def clean_input(label, db_key, is_search=False, step=1.0):
-    # To prevent duplicate widget IDs, the search bar gets a 'srch_' prefix, 
-    # but BOTH update the exact same database key.
     widget_key = f"srch_{db_key}" if is_search else db_key
     existing_val = st.session_state.db.get(db_key, None)
     
@@ -328,9 +342,6 @@ def clean_input(label, db_key, is_search=False, step=1.0):
 
 def render_inventory_item(index, row, section, is_search=False):
     item_desc = f"{row['Item_Num']} - {row['Description']}"
-    if is_search:
-        item_desc += f"  *(Found in {section})*"
-        
     unit, case_mult, lexan_mult = row['Unit'], row['Case_Mult'], row['Lexan_Mult']
     total = 0.0
     
@@ -428,51 +439,98 @@ def render_inventory_item(index, row, section, is_search=False):
 
     return total
 
-st.title("Inventory Engine v4.1")
-st.caption("🚀 LIVE SYNC & STRAY SEARCH ENABLED | Store 04185")
+st.title("Inventory Engine v4.5")
+st.caption("🚀 LIVE SYNC | DEDUPLICATED SEARCH | Store 04185")
 
-progress_bar = st.progress(0.0, text="🔥 Inventory Completion: 0%")
+# --- 6. THE PRONOUNCED PROGRESS BAR ---
+def is_item_completed(index, section):
+    suffix = f"_{index}_{section}"
+    for k, v in st.session_state.db.items():
+        if k.endswith(suffix) and v > 0:
+            return True
+    return False
 
-# --- 6. THE STRAY ITEM SEARCH BAR ---
-search_query = st.text_input("🔍 Quick Search (Find Stray Items)", placeholder="Type 'Pep', 'Cheese', 'Box'...")
-if search_query:
-    st.markdown("### 🎯 Search Results")
-    matches = df[df['Description'].str.contains(search_query, case=False, na=False)]
-    if not matches.empty:
-        for index, row in matches.iterrows():
-            # Rendering in search mode. We don't append to totals here because 
-            # the accordion loop below handles the master total generation.
-            render_inventory_item(index, row, row['Section'], is_search=True)
-    else:
-        st.info("No items found. Check spelling.")
-    st.divider()
+completed_tasks = sum(1 for i, r in df.iterrows() if is_item_completed(i, r['Section']))
+total_tasks = len(df)
+pct = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
 
-# --- 7. MAIN ACCORDION RENDER LOOP ---
-inventory_totals = []
+text_color = "white" if pct > 50 else "#00583E"
+text_shadow = "1px 1px 3px rgba(0,0,0,0.5)" if pct > 50 else "none"
+bar_bg = "#00583E" if pct < 100 else "#00FF00" 
+
+progress_html = f"""
+<div style="width: 100%; background-color: #e9ecef; border-radius: 25px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15); margin-top: 5px; margin-bottom: 25px; position: relative; height: 50px; border: 2px solid #ccc;">
+    <div style="width: {pct}%; background-color: {bar_bg}; height: 100%; border-radius: 23px; transition: width 0.4s ease-in-out;"></div>
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+        <span style="color: {text_color}; font-family: 'Helvetica Neue', sans-serif; font-weight: 900; font-size: 1.3rem; letter-spacing: 1px; text-shadow: {text_shadow};">
+            {pct}% COMPLETED ({completed_tasks}/{total_tasks})
+        </span>
+    </div>
+</div>
+"""
+st.markdown(progress_html, unsafe_allow_html=True)
+
+# --- 7. THE COLLAPSIBLE STRAY ITEM SEARCH ---
+with st.expander("🔍 QUICK SEARCH (Log Stray Items)", expanded=False):
+    search_query = st.text_input("Find an item out of place (e.g., 'Pep', 'Cheese', 'Box')", key="search_bar")
+    if search_query:
+        st.markdown("### 🎯 Stray Item Logging")
+        # Drop duplicates so we only get ONE unified input block per item
+        unique_matches = df[df['Description'].str.contains(search_query, case=False, na=False)].drop_duplicates(subset=['Item_Num'])
+        
+        if not unique_matches.empty:
+            for _, row in unique_matches.iterrows():
+                item_num = row['Item_Num']
+                # Clean up the description so it just says "Pepperoni" instead of "Pepperoni (Lexan)"
+                base_desc = row['Description'].split("(")[0].strip()
+                unit, case_mult, lexan_mult = row['Unit'], row['Case_Mult'], row['Lexan_Mult']
+                
+                with st.container(border=True):
+                    st.markdown(f"**{item_num} - {base_desc}** *(Stray Count)*")
+                    
+                    # Unified Input Array
+                    cols = st.columns(2) if lexan_mult == 0 else st.columns(3)
+                    with cols[0]:
+                        stray_u = clean_input(f"Stray {unit}s", f"stray_u_{item_num}", is_search=True)
+                    if lexan_mult > 0:
+                        with cols[1]:
+                            stray_l = clean_input("Stray Lexans/Bottles", f"stray_l_{item_num}", is_search=True, step=0.25)
+        else:
+            st.info("No items found. Check spelling.")
+
+# --- 8. MAIN ACCORDION RENDER LOOP ---
+final_output = []
 
 for section in ordered_sections:
     section_data = df[df['Section'] == section]
     if not section_data.empty:
         folder_key = f"exp_{section}_{st.session_state.folder_versions[section]}"
+        icon = section_icons.get(section, "📁")
         
-        with st.expander(f"📁 {section}", expanded=False, key=folder_key):
+        with st.expander(f"{icon} {section}", expanded=False, key=folder_key):
             for index, row in section_data.iterrows():
                 total = render_inventory_item(index, row, section, is_search=False)
-                inventory_totals.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": round(total, 2)})
+                final_output.append({"Item #": row['Item_Num'], "Description": row['Description'], "Total Count": total})
             
-            if st.button(f"✅ FINISH & COLLAPSE {section}", key=f"btn_close_{section}", type="secondary", use_container_width=True):
+            if st.button(f"✅ FINISH & COLLAPSE", key=f"btn_close_{section}", type="secondary", use_container_width=True):
                 st.session_state.folder_versions[section] += 1
                 st.rerun()
 
-# --- 8. OUTPUT & RESET LAYER ---
-total_tasks = len(inventory_totals)
-completed_tasks = sum(1 for item in inventory_totals if item["Total Count"] > 0)
-if total_tasks > 0:
-    progress_bar.progress(completed_tasks / total_tasks, text=f"🔥 Inventory Completion: {int((completed_tasks/total_tasks)*100)}%")
+# --- 9. OUTPUT & RESET LAYER ---
+# Aggregate Stray Items silently into the final output dataframe
+unique_items = df.drop_duplicates(subset=['Item_Num'])
+for _, row in unique_items.iterrows():
+    item_num = row['Item_Num']
+    stray_u = st.session_state.db.get(f"stray_u_{item_num}", 0.0)
+    stray_l = st.session_state.db.get(f"stray_l_{item_num}", 0.0)
+    
+    stray_total = stray_u + (stray_l * row['Lexan_Mult'])
+    if stray_total > 0:
+        final_output.append({"Item #": item_num, "Description": row['Description'], "Total Count": stray_total})
 
 st.divider()
 if st.button("GENERATE FINAL CORPORATE VALUES", type="primary"):
-    final_df = pd.DataFrame(inventory_totals).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
+    final_df = pd.DataFrame(final_output).groupby(['Item #', 'Description'], as_index=False)['Total Count'].sum()
     st.dataframe(final_df.sort_values(by="Item #"), use_container_width=True, hide_index=True, height=600)
     st.success("Sorted by Item #. Ready for Corporate data entry.")
 
